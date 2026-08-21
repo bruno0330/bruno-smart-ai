@@ -68,8 +68,10 @@
   .gvm-btn:disabled{ opacity:.5; cursor:not-allowed; }
 
   .gvm-btn-outline{
+    position:relative;
     background:transparent; color:var(--navy); border:1px solid var(--navy-soft);
     padding:6px 13px; border-radius:3px; font-size:12px; cursor:pointer;
+    white-space:nowrap;
   }
   .gvm-btn-outline:hover:not(:disabled){ background:#dfe5ec; }
   .gvm-btn-outline:disabled{ opacity:.5; cursor:not-allowed; }
@@ -79,7 +81,10 @@
   .gvm-hint{ font-size:11.5px; color:var(--text-soft); margin-top:8px; }
 
   .gvm-btn-feedback{
-    font-size:11.5px; color:var(--rose); font-weight:600; opacity:0; transition:opacity .15s ease;
+    position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%);
+    white-space:nowrap; font-size:11px; font-weight:600; color:#fff; background:var(--navy);
+    padding:4px 9px; border-radius:5px; opacity:0; pointer-events:none;
+    transition:opacity .15s ease; z-index:5;
   }
   .gvm-btn-feedback.show{ opacity:1; }
 
@@ -96,7 +101,7 @@
   @keyframes gvm-bounce{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(4px); } }
   @media (min-width:901px){ .gvm-scroll-hint{ display:none !important; } }
 
-  .gvm-intro-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .gvm-intro-head{ display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; margin-bottom:8px; }
   .gvm-intro-edit{
     width:100%; min-height:130px; padding:10px 12px; border:1px solid #ccd3dc; border-radius:4px;
     font-family:"Noto Sans TC",sans-serif; font-size:13.5px; line-height:1.8;
@@ -799,7 +804,7 @@
     if (!badge) {
       badge = document.createElement('span');
       badge.className = 'gvm-btn-feedback';
-      btn.insertAdjacentElement('afterend', badge);
+      btn.appendChild(badge);
       btn._gvmFeedbackBadge = badge;
     }
     clearInterval(btn._gvmFeedbackTimer);
