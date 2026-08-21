@@ -397,6 +397,15 @@
     min-width: 0;
   }
 
+  .history-item .placement {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .history-item .campaign {
     font-family: "IBM Plex Mono", monospace;
     font-size: 12px;
@@ -630,7 +639,7 @@
     { label: "banner 首頁右上行銷（300×250／970×250）", medium: "banner_frontpage", content: "_frontpagedisplay_300x250_970X250", source: "gvm" },
     { label: "訂購專區 banner（桌機1920×594／手機375×281）", medium: "banner_shop", content: "_display_", source: "gvm" },
     { label: "活動列表 banner（桌機1920×594／手機375×281）", medium: "banner_activity", content: "_display_", source: "gvm" },
-    { label: "線上讀訂閱頁", medium: "banner_shop", content: "_display_", source: "gvm" },
+    { label: "線上讀訂閱頁", medium: "banner_shop", content: "_display_mind", source: "gvm" },
     { label: "banner Monster MPU（300×250／300×600）", medium: "banner", content: "_display_monstermpu", source: "gvm" },
     { label: "banner Sky Billboard（970×250／300×250）", medium: "banner", content: "_display_skybillboard", source: "gvm" },
     { label: "banner Diamond Billboard（970×250／300×250）", medium: "banner", content: "_display_diamondbillboard", source: "gvm" },
@@ -1014,13 +1023,20 @@
 
       var meta = document.createElement("div");
       meta.className = "meta";
-      var campaign = document.createElement("div");
-      campaign.className = "campaign";
-      campaign.textContent = entry.campaign + (entry.content ? " · " + entry.content : "");
+      if (entry.placement) {
+        var placement = document.createElement("div");
+        placement.className = "placement";
+        placement.textContent = entry.placement;
+        meta.appendChild(placement);
+      } else {
+        var campaign = document.createElement("div");
+        campaign.className = "campaign";
+        campaign.textContent = entry.campaign + (entry.content ? " · " + entry.content : "");
+        meta.appendChild(campaign);
+      }
       var urlLine = document.createElement("div");
       urlLine.className = "url";
       urlLine.textContent = entry.url;
-      meta.appendChild(campaign);
       meta.appendChild(urlLine);
 
       var btn = document.createElement("button");
@@ -1037,10 +1053,17 @@
     });
   }
 
+  function currentPlacementLabel() {
+    if (placementPickEl.value === "") return "";
+    var p = PLACEMENTS[Number(placementPickEl.value)];
+    return p ? p.label : "";
+  }
+
   function addHistory(url, campaignVal, contentVal) {
     historyData.unshift({
       campaign: campaignVal !== undefined ? campaignVal : campaignFullEl.value,
       content: contentVal !== undefined ? contentVal : contentEl.value,
+      placement: currentPlacementLabel(),
       url: url
     });
     saveHistory(historyData);
@@ -1183,7 +1206,7 @@
       var url = buildUrlFor(srcVal, p.medium, campaignVal, p.content);
       if (url) {
         urls.push(url);
-        historyData.unshift({ campaign: campaignVal, content: p.content, url: url });
+        historyData.unshift({ campaign: campaignVal, content: p.content, placement: p.label, url: url });
       }
     });
 
