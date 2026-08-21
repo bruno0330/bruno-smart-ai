@@ -1,0 +1,50 @@
+name: Monthly GVM scrape
+
+on:
+  schedule:
+    # 5th of each month, 01:00 UTC = 09:00 Taipei -- gives buffer after
+    # month-start for gvm.com.tw to actually populate the new issue
+    - cron: '0 1 5 * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Scrape any new issue
+        run: python3 scripts/monthly_scrape.py
+
+      - name: Rebuild smart-curation slim index
+        run: python3 scripts/build_curation_index.py
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet -- data/ smart-curation/data/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open pull request for review
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          add-paths: |
+            data/gvm_index_full.json
+            smart-curation/data/curation_index.json
+          commit-message: "chore: monthly GVM scrape update"
+          title: "遠見雜誌新一期文章（自動抓取，待審核）"
+          body-path: scripts/.monthly_scrape_summary.txt
+          branch: auto/monthly-scrape
+          delete-branch: true

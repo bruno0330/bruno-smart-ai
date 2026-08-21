@@ -3,21 +3,943 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能策展部 — 建置中</title>
+<title>智能策展部｜遠見線上讀</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  body{margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
-    background:#f6f6f8; color:#18181b; font-family:-apple-system,"Noto Sans TC",sans-serif;}
-  .box{text-align:center; padding:2rem;}
-  h1{font-size:20px; font-weight:600; margin:0 0 8px;}
-  p{color:#6b6b74; font-size:14px; margin:0 0 20px;}
-  a{color:#16325c; font-size:14px;}
+  :root{
+    --navy:#16325c; --navy-deep:#0d2038; --navy-soft:#4a6483;
+    --rose:#a9746e; --rose-light:#d9b8a9;
+    --cyan-1:#38bdf8; --cyan-2:#0284c7;
+    --panel-bg:#eef1f5; --paper:#fafbfc; --line:#dde3ea;
+    --text:#2a2f36; --text-soft:#6b7280;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:#fdfcfb; color:var(--text); font-family:"Noto Sans TC",sans-serif; }
+  .topbar{ height:4px; background:linear-gradient(90deg,var(--cyan-1),var(--cyan-2)); }
+  .page-header{
+    max-width:1240px; margin:0 auto; padding:16px 24px 0;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .back-link{ font-size:13px; font-weight:500; text-decoration:none; color:var(--cyan-2); }
+  .back-link:hover{ color:var(--cyan-1); }
+  .brand{ font-size:11px; color:var(--text-soft); letter-spacing:.04em; }
+
+  #gvm-root{
+    max-width:1240px; margin:0 auto; padding:20px 24px 60px;
+  }
+  .gvm-masthead{ text-align:center; margin-bottom:28px; }
+  .gvm-masthead-eyebrow{
+    font-size:11px; letter-spacing:.3em; color:var(--rose); text-transform:uppercase;
+    font-weight:700; margin-bottom:8px;
+  }
+  .gvm-masthead-title{
+    font-family:"Noto Serif TC",serif; font-weight:900; font-size:26px;
+    color:var(--navy-deep); margin:0 0 6px; letter-spacing:.03em;
+  }
+  .gvm-masthead-sub{ font-size:12.5px; color:var(--text-soft); }
+
+  .gvm-layout{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:22px; align-items:start; }
+  @media (max-width:900px){ .gvm-layout{ grid-template-columns:1fr; } }
+
+  .gvm-panel{ background:var(--panel-bg); border-radius:6px; padding:20px; }
+  .gvm-panel + .gvm-panel{ margin-top:18px; }
+  .gvm-panel-label{
+    font-size:11px; letter-spacing:.2em; color:var(--navy); text-transform:uppercase;
+    font-weight:700; margin-bottom:12px;
+  }
+
+  .gvm-form{ display:flex; flex-wrap:wrap; gap:10px; }
+  .gvm-field{ display:flex; flex-direction:column; gap:4px; }
+  .gvm-field label{ font-size:11px; color:var(--text-soft); }
+  .gvm-field input, .gvm-field select, #gvm-focus-year{
+    padding:8px 10px; border:1px solid #ccd3dc; border-radius:3px; font-size:13.5px;
+    font-family:inherit; color:var(--text); background:#fff;
+  }
+  .gvm-field input:focus, .gvm-field select:focus{ outline:none; border-color:var(--navy); }
+  .gvm-keyword-field{ flex:1 1 160px; }
+
+  .gvm-btn{
+    background:var(--navy); color:#fff; border:none; padding:9px 20px; border-radius:3px;
+    font-size:13.5px; font-weight:700; cursor:pointer; align-self:flex-end;
+  }
+  .gvm-btn:hover:not(:disabled){ background:var(--navy-deep); }
+  .gvm-btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .gvm-btn-outline{
+    background:transparent; color:var(--navy); border:1px solid var(--navy-soft);
+    padding:6px 13px; border-radius:3px; font-size:12px; cursor:pointer;
+  }
+  .gvm-btn-outline:hover:not(:disabled){ background:#dfe5ec; }
+  .gvm-btn-outline:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .gvm-status{ font-size:12.5px; color:var(--text-soft); margin-top:12px; min-height:16px; }
+  .gvm-status.error{ color:#b5432f; }
+  .gvm-hint{ font-size:11.5px; color:var(--text-soft); margin-top:8px; }
+
+  .gvm-intro-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .gvm-intro-edit{
+    width:100%; min-height:130px; padding:10px 12px; border:1px solid #ccd3dc; border-radius:4px;
+    font-family:"Noto Sans TC",sans-serif; font-size:13.5px; line-height:1.8;
+    resize:vertical; background:#fff; color:var(--text);
+  }
+  .gvm-intro-edit:focus{ outline:none; border-color:var(--navy); }
+
+  .gvm-edit-item{ border:1px solid #dde3ea; border-radius:4px; padding:12px; background:#fff; }
+  .gvm-edit-item + .gvm-edit-item{ margin-top:10px; }
+  .gvm-edit-num{ font-size:11px; color:var(--rose); font-weight:700; margin-bottom:6px; }
+  .gvm-edit-item input, .gvm-edit-item textarea{
+    width:100%; padding:7px 9px; border:1px solid #dde3ea; border-radius:3px;
+    font-size:13px; font-family:inherit; margin-top:4px; color:var(--text);
+  }
+  .gvm-edit-item textarea{ min-height:70px; resize:vertical; line-height:1.6; }
+  .gvm-edit-item label{ font-size:10.5px; color:var(--text-soft); }
+  .gvm-edit-url{ font-size:11px; color:var(--navy-soft); margin-top:8px; word-break:break-all; }
+  .gvm-edit-url a{ color:var(--navy-soft); }
+
+  .gvm-adv-toggle{
+    background:none; border:none; color:var(--navy); font-size:12.5px; font-weight:700;
+    cursor:pointer; padding:6px 0; display:flex; align-items:center; gap:6px;
+  }
+  .gvm-adv-body{ display:none; margin-top:12px; }
+  .gvm-adv-body.open{ display:block; }
+  .gvm-adv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:520px){ .gvm-adv-grid{ grid-template-columns:1fr; } }
+
+  .gvm-copy-row{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .gvm-copy-hint{ font-size:11.5px; color:var(--text-soft); }
+
+  .gvm-preview-wrap{ position:sticky; top:20px; }
+  @media (max-width:900px){ .gvm-preview-wrap{ position:static; } }
+  .gvm-preview-frame{ background:var(--paper); border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .gvm-preview-bar{
+    background:#fff; border-bottom:1px solid var(--line); padding:8px 14px;
+    font-size:11px; color:var(--text-soft); letter-spacing:.1em;
+  }
+  .gvm-preview-body{ padding:30px 28px 40px; min-height:300px; }
+  .gvm-pv-empty{ text-align:center; color:var(--text-soft); font-size:13px; padding:60px 20px; line-height:2; }
+
+  .gvm-pv-masthead{ text-align:center; margin-bottom:26px; }
+  .gvm-pv-eyebrow{ font-size:10px; letter-spacing:.3em; color:var(--rose); text-transform:uppercase; font-weight:700; margin-bottom:6px; }
+  .gvm-pv-title{ font-family:"Noto Serif TC",serif; font-weight:900; font-size:22px; color:var(--navy-deep); margin:0 0 6px; }
+  .gvm-pv-sub{ font-size:11.5px; color:var(--text-soft); }
+  .gvm-pv-date{ font-size:11px; color:var(--navy-soft); font-weight:700; letter-spacing:.05em; margin-top:8px; }
+  .gvm-pv-rule{ width:40px; height:2px; background:var(--rose); margin:14px auto 0; }
+
+  .gvm-pv-section-divider{ display:flex; align-items:center; gap:12px; margin:32px 0 22px; }
+  .gvm-pv-section-divider::before, .gvm-pv-section-divider::after{ content:''; flex:1; height:1px; background:var(--line); }
+  .gvm-pv-section-divider span{ font-size:10px; letter-spacing:.25em; color:var(--rose); text-transform:uppercase; font-weight:700; white-space:nowrap; }
+
+  .gvm-pv-intro-wrap{ margin:0 0 22px; }
+  .gvm-pv-intro{
+    font-family:"Noto Serif TC",serif; font-size:15.5px; font-weight:600; line-height:1.85; color:var(--text);
+    border-left:3px solid var(--rose-light); padding:6px 0 6px 16px; white-space:pre-wrap;
+  }
+
+  .gvm-pv-item{ display:flex; gap:16px; padding:20px 0; }
+  .gvm-pv-item + .gvm-pv-item{ border-top:1px solid var(--line); }
+  .gvm-pv-media{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; flex-shrink:0; width:76px; }
+  .gvm-pv-num{ font-family:"Noto Serif TC",serif; font-weight:700; font-size:28px; color:var(--rose); line-height:1; text-align:left; }
+  .gvm-pv-thumb{ width:76px; height:76px; border-radius:6px; object-fit:cover; background:var(--panel-bg); }
+  .gvm-pv-body{ flex:1; min-width:0; }
+  .gvm-pv-source{ font-size:10.5px; color:var(--navy-soft); font-weight:700; letter-spacing:.04em; margin-bottom:5px; }
+  .gvm-pv-item-title{ font-family:"Noto Serif TC",serif; font-size:15px; font-weight:700; color:var(--navy-deep); margin:0 0 6px; line-height:1.5; }
+  .gvm-pv-summary{ font-size:12.5px; line-height:1.7; color:var(--text); margin-bottom:8px; }
+  .gvm-pv-link{ font-size:11.5px; color:var(--navy); text-decoration:none; font-weight:700; border-bottom:1px solid var(--navy-soft); padding-bottom:1px; }
+  .gvm-pv-link:hover{ color:var(--rose); border-color:var(--rose); }
+
+  .gvm-footnote{ text-align:center; font-size:11px; color:var(--text-soft); margin-top:30px; padding-top:18px; border-top:1px solid var(--line); line-height:1.7; }
+
+  .gvm-focus-label{ font-size:11px; letter-spacing:.1em; color:var(--navy-soft); text-transform:uppercase; font-weight:700; margin-bottom:8px; }
+  .gvm-focus-text{ font-size:13px; line-height:1.8; color:var(--text); }
+  .gvm-focus-source{ font-size:11px; color:var(--text-soft); margin-top:8px; }
+  .gvm-focus-source a{ color:var(--navy-soft); }
+
+  .gvm-pv-focus{ margin:0 0 22px; }
+  .gvm-pv-focus-label{ font-size:11px; letter-spacing:.15em; color:var(--navy-soft); text-transform:uppercase; font-weight:700; margin-bottom:8px; }
+  .gvm-pv-focus-text{ font-family:"Noto Serif TC",serif; font-size:15px; font-weight:600; line-height:1.85; color:var(--text); }
+  .gvm-pv-focus-source{ font-size:11px; color:var(--text-soft); margin-top:10px; }
+  .gvm-pv-focus-source a{ color:var(--navy-soft); text-decoration:none; }
+  .gvm-pv-focus-source a:hover{ color:var(--rose); }
+
+  @media (max-width:900px){
+    .gvm-pv-item{ flex-direction:column; }
+    .gvm-pv-media{ width:100%; }
+    .gvm-pv-thumb{ width:100%; height:auto; object-fit:unset; border-radius:8px; }
+    .gvm-pv-num{ font-size:30px; }
+
+    .gvm-pv-intro{ border-left:none; padding-left:0; }
+  }
 </style>
 </head>
 <body>
-  <div class="box">
-    <h1>智能策展部（遠見線上讀）建置中</h1>
-    <p>v4 本地資料庫版正在開發，敬請期待</p>
-    <a href="../index.html">← 回入口頁</a>
+<div class="topbar"></div>
+<div class="page-header">
+  <a class="back-link" href="../index.html">← 回入口頁</a>
+  <span class="brand">BRUNO SMART AI LTD.</span>
+</div>
+
+<div id="gvm-root">
+  <div class="gvm-masthead">
+    <div class="gvm-masthead-eyebrow">GVM WEEKLY CURATION</div>
+    <div class="gvm-masthead-title">遠見線上讀</div>
+    <div class="gvm-masthead-sub">每週智能策展・僅收錄遠見雜誌紙本典藏文章・本地資料庫版（零 API 呼叫）</div>
   </div>
+
+  <div class="gvm-layout">
+    <!-- LEFT: editing workspace -->
+    <div>
+      <div class="gvm-panel">
+        <div class="gvm-panel-label">1・搜尋設定</div>
+        <div class="gvm-form">
+          <div class="gvm-field gvm-keyword-field">
+            <label for="gvm-keyword">關鍵字</label>
+            <input id="gvm-keyword" type="text" placeholder="例如：AI、淨零、高齡化" autocomplete="off">
+          </div>
+          <div class="gvm-field">
+            <label for="gvm-year">限西元幾年之後</label>
+            <select id="gvm-year"></select>
+          </div>
+          <div class="gvm-field">
+            <label for="gvm-count">文章篇數</label>
+            <select id="gvm-count">
+              <option value="3">3 篇</option>
+              <option value="4" selected>4 篇</option>
+              <option value="5">5 篇</option>
+            </select>
+          </div>
+          <button id="gvm-generate" class="gvm-btn" disabled>搜尋</button>
+          <button id="gvm-reset" class="gvm-btn-outline" style="align-self:flex-end">清除∕重新開始</button>
+        </div>
+        <div id="gvm-last-keyword" class="gvm-copy-hint" style="margin-top:8px"></div>
+        <div id="gvm-status" class="gvm-status">資料庫載入中…</div>
+      </div>
+
+      <div id="gvm-intro-panel" class="gvm-panel" style="display:none">
+        <div class="gvm-intro-head">
+          <div class="gvm-panel-label" style="margin:0">2・編者的話</div>
+          <div style="display:flex; gap:8px;">
+            <button id="gvm-regen-intro" class="gvm-btn-outline">換一版</button>
+            <button id="gvm-polish-intro" class="gvm-btn-outline">用 AI 潤稿</button>
+          </div>
+        </div>
+        <textarea id="gvm-intro-edit" class="gvm-intro-edit"></textarea>
+        <div id="gvm-intro-count" class="gvm-copy-hint" style="margin-top:6px;text-align:right"></div>
+      </div>
+
+      <div id="gvm-list-panel" class="gvm-panel" style="display:none">
+        <div class="gvm-panel-label">3・文章內容（可編輯）</div>
+        <div id="gvm-edit-list"></div>
+      </div>
+
+      <div class="gvm-panel">
+        <div class="gvm-intro-head">
+          <div class="gvm-panel-label" style="margin:0">4・國際焦點（自動帶入，遠見雜誌真實報導）</div>
+          <div style="display:flex; gap:8px;">
+            <select id="gvm-focus-year"></select>
+            <button id="gvm-focus-cycle" class="gvm-btn-outline">換一篇</button>
+          </div>
+        </div>
+        <div id="gvm-focus-list"></div>
+      </div>
+
+      <div id="gvm-utm-panel" class="gvm-panel" style="display:none">
+        <button id="gvm-adv-toggle" class="gvm-adv-toggle">▸ 進階設定・UTM 追蹤參數</button>
+        <div id="gvm-adv-body" class="gvm-adv-body">
+          <div class="gvm-adv-grid">
+            <div class="gvm-field">
+              <label for="gvm-utm-source">utm_source</label>
+              <input id="gvm-utm-source" type="text" value="line">
+            </div>
+            <div class="gvm-field">
+              <label for="gvm-utm-medium">utm_medium</label>
+              <input id="gvm-utm-medium" type="text" value="social">
+            </div>
+            <div class="gvm-field">
+              <label for="gvm-utm-campaign">utm_campaign</label>
+              <input id="gvm-utm-campaign" type="text" value="gvm_curation">
+            </div>
+            <div class="gvm-field">
+              <label for="gvm-utm-date">日期（用於 utm_content 後綴）</label>
+              <input id="gvm-utm-date" type="date">
+            </div>
+            <div class="gvm-field">
+              <label for="gvm-utm-from">from</label>
+              <input id="gvm-utm-from" type="text" value="line">
+            </div>
+          </div>
+        </div>
+        <div class="gvm-copy-row">
+          <button id="gvm-copy-links" class="gvm-btn-outline">複製全部連結</button>
+          <button id="gvm-download-html" class="gvm-btn-outline">下載完整 HTML</button>
+          <span class="gvm-copy-hint">下載後可直接開啟或轉發給同事派發</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: live preview -->
+    <div class="gvm-preview-wrap">
+      <div class="gvm-preview-frame">
+        <div class="gvm-preview-bar">4・即時預覽</div>
+        <div id="gvm-preview-body" class="gvm-preview-body">
+          <div class="gvm-pv-empty">輸入關鍵字並按「搜尋」後，這裡會即時顯示最終畫面</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var $ = function (id) { return document.getElementById(id); };
+
+  var keywordInput = $('gvm-keyword');
+  var yearSelect = $('gvm-year');
+  var countSelect = $('gvm-count');
+  var generateBtn = $('gvm-generate');
+  var resetBtn = $('gvm-reset');
+  var lastKeywordEl = $('gvm-last-keyword');
+  var regenIntroBtn = $('gvm-regen-intro');
+  var polishIntroBtn = $('gvm-polish-intro');
+  var statusEl = $('gvm-status');
+  var introPanel = $('gvm-intro-panel');
+  var introEditEl = $('gvm-intro-edit');
+  var introCountEl = $('gvm-intro-count');
+  var listPanel = $('gvm-list-panel');
+  var editListEl = $('gvm-edit-list');
+  var utmPanel = $('gvm-utm-panel');
+  var advToggle = $('gvm-adv-toggle');
+  var advBody = $('gvm-adv-body');
+  var copyLinksBtn = $('gvm-copy-links');
+  var downloadHtmlBtn = $('gvm-download-html');
+  var previewBody = $('gvm-preview-body');
+
+  var utmSourceInput = $('gvm-utm-source');
+  var utmMediumInput = $('gvm-utm-medium');
+  var utmCampaignInput = $('gvm-utm-campaign');
+  var utmDateInput = $('gvm-utm-date');
+  var utmFromInput = $('gvm-utm-from');
+
+  var DATA_URL = 'data/curation_index.json';
+  var ARTICLES = [];
+  var state = { keyword: '', intro: '', articles: [] };
+  var GLOBAL_FOCUS_CATEGORY = '全球焦點';
+  var globalFocusCandidates = [];
+  var globalFocusArticle = null;
+  var focusYearSelect = $('gvm-focus-year');
+
+  // 同義詞擴充表：key 為代表詞，陣列為同組所有詞。要擴充涵蓋主題直接在這裡加陣列即可。
+  var SYNONYM_GROUPS = [
+    ['AI','人工智慧','智能','生成式AI','ChatGPT'],
+    ['淨零','碳中和','減碳','溫室氣體','淨零排放'],
+    ['ESG','永續','企業永續','永續發展'],
+    ['高齡化','高齡','老年','銀髮','超高齡社會'],
+    ['少子化','少子','生育率','人口危機'],
+    ['房市','房地產','房價','買房','不動產'],
+    ['半導體','晶片','台積電','晶圓'],
+    ['通膨','物價','升息','央行'],
+    ['數位轉型','數位化','轉型'],
+    ['職場','工作','就業','人才'],
+    ['教育','學校','大學','108課綱'],
+    ['兩岸','中國大陸','中國','對岸'],
+    ['選舉','大選','總統大選','政治'],
+    ['健康','醫療','醫院','疾病','長照'],
+    ['旅遊','觀光','出國','景點'],
+    ['新創','創業','新創公司','獨角獸'],
+    ['資安','駭客','網路安全','個資外洩'],
+    ['電動車','EV','特斯拉','充電'],
+    ['缺工','人力短缺','勞動力'],
+    ['零售','通路','電商','超商'],
+    ['品牌','行銷','廣告','品牌經營'],
+    ['領導','管理','經營','企業管理'],
+    ['理財','財富管理','投資','退休金'],
+    ['美國','川普','拜登','美中'],
+    ['日本','東京','日圓'],
+    ['疫情','新冠','COVID'],
+    ['氣候變遷','極端氣候','暖化'],
+    ['綠能','再生能源','太陽能','風電']
+  ];
+
+  var INTRO_TEMPLATES = [
+    function (kw, count, minY, maxY) {
+      return '「' + kw + '」是近期不容忽視的重要議題。《遠見雜誌》深耕報導超過 40 年，這次特別從歷年典藏中精選出 ' + count +
+        ' 篇具代表性的深度好文（' + minY + '～' + maxY + ' 年），內容橫跨政策動向、產業觀察與第一線人物故事，' +
+        '希望能幫助你用最短時間掌握「' + kw + '」的來龍去脈與最新發展，歡迎點閱、分享給更多關心這個議題的朋友。';
+    },
+    function (kw, count, minY, maxY) {
+      return '關於「' + kw + '」，遠見雜誌從創刊以來累積了不少第一手觀察與深度分析。這次特別從龐大的紙本典藏中挑出 ' + count +
+        ' 篇具代表性的報導（' + minY + '～' + maxY + ' 年），從不同時期、不同角度切入同一個主題，' +
+        '讓你一次讀懂脈絡與轉折，也看見遠見雜誌長期關注這個議題的軌跡。';
+    },
+    function (kw, count, minY, maxY) {
+      return '「' + kw + '」是近期熱門的討論話題，也是《遠見雜誌》長期關注的焦點之一。以下精選 ' + count +
+        ' 篇跨越 ' + minY + '～' + maxY + ' 年的真實報導，提供產業趨勢、政策解讀與第一線觀察等不同角度的深度解析，' +
+        '值得靜下心來收藏閱讀，也適合分享給正在關心這個議題的同事與朋友。';
+    }
+  ];
+  var introTemplateIdx = 0;
+
+  function expandTerms(keyword) {
+    var kw = keyword.trim();
+    if (!kw) return [];
+    var lower = kw.toLowerCase();
+    for (var i = 0; i < SYNONYM_GROUPS.length; i++) {
+      var group = SYNONYM_GROUPS[i];
+      var hit = group.some(function (term) {
+        var t = term.toLowerCase();
+        return t === lower || t.includes(lower) || lower.includes(t);
+      });
+      if (hit) return Array.from(new Set([kw].concat(group)));
+    }
+    return [kw];
+  }
+
+  function cleanExcerpt(str) {
+    if (!str) return str;
+    return str
+      .replace(/&(nbsp|amp|lt|gt|quot|#39);/g, ' ')
+      .replace(/&[a-zA-Z]{0,5}$/, '')
+      .trim();
+  }
+
+  // 全文摘要按年份拆檔存放（smart-curation/data/summaries/{year}.json），
+  // 精簡索引檔只帶短摘要片段（es）供搜尋比對，避免每次都要下載全部 29,583 篇的全文。
+  // 只在文章真的被選中要顯示時，才動態抓對應年份的全文檔。
+  var summariesCache = {};
+
+  function ensureSummaries(years) {
+    var toFetch = years.filter(function (y) { return y && !summariesCache[y]; });
+    return Promise.all(toFetch.map(function (y) {
+      return fetch('data/summaries/' + y + '.json')
+        .then(function (r) { return r.ok ? r.json() : {}; })
+        .then(function (map) { summariesCache[y] = map; })
+        .catch(function () { summariesCache[y] = {}; });
+    }));
+  }
+
+  function fullTextFor(article) {
+    var year = (article.y || '').split('/')[0];
+    var map = summariesCache[year];
+    if (map && map[article.i]) return map[article.i];
+    return (article.es || '') + '…';
+  }
+
+  function scoreArticle(article, terms, originalLower) {
+    var title = (article.t || '').toLowerCase();
+    var excerpt = (article.es || '').toLowerCase();
+    var score = 0;
+    terms.forEach(function (term) {
+      var t = term.toLowerCase();
+      var isOriginal = t === originalLower;
+      if (title.includes(t)) score += isOriginal ? 10 : 7;
+      if (excerpt.includes(t)) score += isOriginal ? 5 : 3;
+    });
+    if (score > 0) {
+      var year = parseInt((article.y || '').split('/')[0], 10);
+      if (!isNaN(year)) {
+        var recency = Math.max(0, Math.min(1, (year - 1987) / (2026 - 1987)));
+        score += recency * 3;
+      }
+    }
+    return score;
+  }
+
+  function yearOf(article) {
+    return parseInt((article.y || '').split('/')[0], 10) || 0;
+  }
+  function monthOf(article) {
+    return parseInt((article.y || '').split('/')[1], 10) || 0;
+  }
+
+  function searchArticles(keyword, count, yearLimit) {
+    var terms = expandTerms(keyword);
+    if (!terms.length) return [];
+    var originalLower = keyword.trim().toLowerCase();
+
+    var pool = ARTICLES;
+    if (yearLimit) pool = pool.filter(function (a) { return yearOf(a) >= yearLimit; });
+
+    var scored = pool
+      .map(function (a) { return { article: a, score: scoreArticle(a, terms, originalLower) }; })
+      .filter(function (x) { return x.score > 0; })
+      .sort(function (a, b) { return b.score - a.score; });
+
+    var picked = [];
+    var usedIssues = {};
+    scored.forEach(function (item) {
+      if (picked.length >= count) return;
+      var key = item.article.n || item.article.y;
+      if (usedIssues[key]) return;
+      usedIssues[key] = true;
+      picked.push(item.article);
+    });
+    if (picked.length < count) {
+      scored.forEach(function (item) {
+        if (picked.length >= count) return;
+        if (picked.indexOf(item.article) !== -1) return;
+        picked.push(item.article);
+      });
+    }
+    return picked.slice().sort(function (a, b) {
+      var ya = yearOf(a), yb = yearOf(b);
+      if (ya !== yb) return yb - ya;
+      return monthOf(b) - monthOf(a);
+    });
+  }
+
+  function buildIntro(keyword, articles) {
+    var years = articles.map(yearOf).filter(function (y) { return y > 0; });
+    var minY = years.length ? Math.min.apply(null, years) : '';
+    var maxY = years.length ? Math.max.apply(null, years) : '';
+    var tpl = INTRO_TEMPLATES[introTemplateIdx % INTRO_TEMPLATES.length];
+    introTemplateIdx++;
+    return tpl(keyword, articles.length, minY, maxY);
+  }
+
+  (function populateYears() {
+    var opt0 = document.createElement('option');
+    opt0.value = ''; opt0.textContent = '不限年份';
+    yearSelect.appendChild(opt0);
+    for (var y = 2026; y >= 1987; y--) {
+      var opt = document.createElement('option');
+      opt.value = String(y);
+      opt.textContent = y + ' 年之後';
+      yearSelect.appendChild(opt);
+    }
+  })();
+
+  (function setDefaultDate() {
+    var d = new Date();
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    utmDateInput.value = d.getFullYear() + '-' + mm + '-' + dd;
+  })();
+
+  function mmddFromDateValue(v) {
+    if (!v) return '';
+    var parts = v.split('-');
+    return parts.length === 3 ? parts[1] + parts[2] : '';
+  }
+
+  function appendUtm(rawUrl) {
+    var mmdd = mmddFromDateValue(utmDateInput.value);
+    var campaign = utmCampaignInput.value.trim();
+    var content = mmdd ? campaign + '_' + mmdd : campaign;
+    var params = 'utm_source=' + encodeURIComponent(utmSourceInput.value.trim()) +
+      '&utm_medium=' + encodeURIComponent(utmMediumInput.value.trim()) +
+      '&utm_campaign=' + encodeURIComponent(campaign) +
+      '&utm_content=' + encodeURIComponent(content) +
+      '&from=' + encodeURIComponent(utmFromInput.value.trim());
+    var joiner = rawUrl.indexOf('?') !== -1 ? '&' : '?';
+    return rawUrl + joiner + params;
+  }
+
+  function formatToday(sep) {
+    var d = new Date();
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    return sep ? [d.getFullYear(), mm, dd].join(sep) : d.getFullYear() + '年' + mm + '月' + dd + '日';
+  }
+
+  function setStatus(msg, isError) {
+    statusEl.textContent = msg || '';
+    statusEl.className = isError ? 'gvm-status error' : 'gvm-status';
+  }
+
+  function formatSource(a) {
+    var parts = (a.y || '').split('/');
+    var y = parts[0] || '', m = parts[1] || '';
+    var yStr = y ? y + '年' + (m ? m + '月' : '') : '';
+    return [yStr, a.n].filter(Boolean).join('・');
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
+  }
+
+  function renderEditList() {
+    editListEl.innerHTML = '';
+    state.articles.forEach(function (a, i) {
+      var item = document.createElement('div');
+      item.className = 'gvm-edit-item';
+
+      var numDiv = document.createElement('div');
+      numDiv.className = 'gvm-edit-num';
+      numDiv.textContent = String(i + 1).padStart(2, '0') + '　' + formatSource(a);
+      item.appendChild(numDiv);
+
+      var titleLabel = document.createElement('label');
+      titleLabel.textContent = '標題';
+      item.appendChild(titleLabel);
+
+      var titleInput = document.createElement('input');
+      titleInput.type = 'text';
+      titleInput.dataset.field = 'title';
+      titleInput.dataset.i = i;
+      titleInput.value = a.title;
+      item.appendChild(titleInput);
+
+      var summaryRow = document.createElement('div');
+      summaryRow.style.cssText = 'margin-top:8px;display:flex;justify-content:space-between;align-items:baseline';
+      var summaryLabel = document.createElement('label');
+      summaryLabel.textContent = '推薦閱讀文字（來自遠見真實摘要，可微調）';
+      var summaryCount = document.createElement('span');
+      summaryCount.className = 'gvm-copy-hint';
+      summaryCount.dataset.count = i;
+      summaryCount.textContent = (a.summary || '').length + ' 字';
+      summaryRow.appendChild(summaryLabel);
+      summaryRow.appendChild(summaryCount);
+      item.appendChild(summaryRow);
+
+      var summaryTextarea = document.createElement('textarea');
+      summaryTextarea.dataset.field = 'summary';
+      summaryTextarea.dataset.i = i;
+      summaryTextarea.value = a.summary;
+      item.appendChild(summaryTextarea);
+
+      var urlDiv = document.createElement('div');
+      urlDiv.className = 'gvm-edit-url';
+      var urlLink = document.createElement('a');
+      urlLink.href = a.url; urlLink.target = '_blank'; urlLink.rel = 'noopener noreferrer';
+      urlLink.textContent = a.url;
+      urlDiv.appendChild(document.createTextNode('原文網址：'));
+      urlDiv.appendChild(urlLink);
+      item.appendChild(urlDiv);
+
+      editListEl.appendChild(item);
+    });
+  }
+
+  function renderPreview() {
+    if (!state.articles.length) {
+      previewBody.innerHTML = '<div class="gvm-pv-empty">輸入關鍵字並按「搜尋」後，這裡會即時顯示最終畫面</div>';
+      return;
+    }
+    var html = '';
+    html += '<div class="gvm-pv-masthead">' +
+      '<div class="gvm-pv-eyebrow">GVM WEEKLY CURATION</div>' +
+      '<div class="gvm-pv-title">遠見線上讀</div>' +
+      '<div class="gvm-pv-sub">每週智能策展・僅收錄遠見雜誌紙本典藏文章</div>' +
+      '<div class="gvm-pv-date">' + formatToday() + '</div>' +
+      '<div class="gvm-pv-rule"></div></div>';
+    html += '<div class="gvm-pv-intro-wrap"><div class="gvm-pv-intro">' + escapeHtml(state.intro) + '</div></div>';
+    html += '<div class="gvm-pv-section-divider"><span>編輯推薦</span></div>';
+    state.articles.forEach(function (a, i) {
+      var thumb = a.img ? '<img class="gvm-pv-thumb" src="' + escapeHtml(a.img) + '" alt="" loading="lazy">' : '';
+      html += '<div class="gvm-pv-item">' +
+        '<div class="gvm-pv-media"><div class="gvm-pv-num">' + String(i + 1).padStart(2, '0') + '</div>' + thumb + '</div>' +
+        '<div class="gvm-pv-body">' +
+          '<div class="gvm-pv-source">' + escapeHtml(formatSource(a)) + '</div>' +
+          '<div class="gvm-pv-item-title">' + escapeHtml(a.title) + '</div>' +
+          '<div class="gvm-pv-summary">' + escapeHtml(a.summary) + '</div>' +
+          '<a class="gvm-pv-link" href="' + appendUtm(a.url) + '" target="_blank" rel="noopener">閱讀全文 ➔</a>' +
+        '</div></div>';
+    });
+    if (globalFocusArticle) {
+      var fa = globalFocusArticle;
+      html += '<div class="gvm-pv-section-divider"><span>國際焦點</span></div>';
+      html += '<div class="gvm-pv-focus">' +
+        '<div class="gvm-pv-focus-text">' + escapeHtml(fa.t + '。' + cleanExcerpt(fullTextFor(fa))) + '</div>' +
+        '<div class="gvm-pv-focus-source">資料來源：《遠見雜誌》全球焦點・' + escapeHtml(fa.y || '') + '　' +
+        '<a href="' + appendUtm(fa.url) + '" target="_blank" rel="noopener">完整報導 →</a></div></div>';
+    }
+    html += '<div class="gvm-footnote">所有連結均來自遠見雜誌官網 (gvm.com.tw) 真實典藏文章，並自動附加 LINE 成效追蹤參數。</div>';
+    previewBody.innerHTML = html;
+  }
+
+  function focusYearOf(a) {
+    return (a.y || '').split('/')[0];
+  }
+
+  function computeGlobalFocus() {
+    globalFocusCandidates = ARTICLES
+      .filter(function (a) { return a.s === GLOBAL_FOCUS_CATEGORY; })
+      .sort(function (a, b) { return (b.y || '').localeCompare(a.y || ''); });
+    globalFocusArticle = globalFocusCandidates.length ? globalFocusCandidates[0] : null;
+    populateFocusYearSelect();
+    if (!globalFocusArticle) { renderFocusList(); return; }
+    ensureSummaries([focusYearOf(globalFocusArticle)]).then(renderFocusList);
+  }
+
+  function populateFocusYearSelect() {
+    var years = [];
+    globalFocusCandidates.forEach(function (a) {
+      var y = focusYearOf(a);
+      if (y && years.indexOf(y) === -1) years.push(y);
+    });
+    focusYearSelect.innerHTML = '';
+    years.forEach(function (y) {
+      var opt = document.createElement('option');
+      opt.value = y; opt.textContent = y + ' 年';
+      focusYearSelect.appendChild(opt);
+    });
+    if (globalFocusArticle) focusYearSelect.value = focusYearOf(globalFocusArticle);
+  }
+
+  function selectFocusYear(year) {
+    var match = globalFocusCandidates.find(function (a) { return focusYearOf(a) === year; });
+    if (!match) return;
+    globalFocusArticle = match;
+    ensureSummaries([year]).then(function () {
+      renderFocusList();
+      renderPreview();
+    });
+  }
+
+  function cycleGlobalFocus() {
+    if (!globalFocusArticle) return;
+    var year = focusYearOf(globalFocusArticle);
+    var group = globalFocusCandidates.filter(function (a) { return focusYearOf(a) === year; });
+    if (group.length <= 1) return;
+    var idx = group.indexOf(globalFocusArticle);
+    globalFocusArticle = group[(idx + 1) % group.length];
+    ensureSummaries([year]).then(function () {
+      renderFocusList();
+      renderPreview();
+    });
+  }
+
+  function renderFocusList() {
+    var el = $('gvm-focus-list');
+    if (!globalFocusArticle) {
+      el.innerHTML = '<span class="gvm-copy-hint">目前資料庫中沒有「' + GLOBAL_FOCUS_CATEGORY + '」分類的文章。</span>';
+      return;
+    }
+    var a = globalFocusArticle;
+    el.innerHTML = '';
+    var text = document.createElement('div');
+    text.className = 'gvm-focus-text';
+    text.textContent = a.t + '。' + cleanExcerpt(fullTextFor(a));
+    var source = document.createElement('div');
+    source.className = 'gvm-focus-source';
+    var link = document.createElement('a');
+    link.href = a.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+    link.textContent = '完整報導 →';
+    source.appendChild(document.createTextNode('資料來源：《遠見雜誌》全球焦點・' + (a.y || '') + '　'));
+    source.appendChild(link);
+    el.appendChild(text);
+    el.appendChild(source);
+  }
+
+  function refreshAll() {
+    renderEditList();
+    renderPreview();
+  }
+
+  function updateIntroCount() {
+    introCountEl.textContent = introEditEl.value.length + ' 字';
+  }
+
+  function generate() {
+    var keyword = keywordInput.value.trim();
+    if (!keyword) { setStatus('請先輸入關鍵字', true); return; }
+    var count = parseInt(countSelect.value, 10);
+    var yearLimit = yearSelect.value ? parseInt(yearSelect.value, 10) : 0;
+
+    var picked = searchArticles(keyword, count, yearLimit);
+    if (!picked.length) {
+      setStatus('找不到與「' + keyword + '」相關的真實文章，換個關鍵字試試？', true);
+      introPanel.style.display = 'none';
+      listPanel.style.display = 'none';
+      utmPanel.style.display = 'none';
+      state = { keyword: '', intro: '', articles: [] };
+      renderPreview();
+      return;
+    }
+
+    generateBtn.disabled = true;
+    setStatus('載入文章全文中…');
+    var years = Array.from(new Set(picked.map(function (a) { return (a.y || '').split('/')[0]; })));
+    ensureSummaries(years).then(function () {
+      state.keyword = keyword;
+      state.articles = picked.map(function (a) {
+        return { title: a.t, summary: cleanExcerpt(fullTextFor(a)), url: a.url, y: a.y, n: a.n, img: a.img || '' };
+      });
+      state.intro = buildIntro(keyword, picked);
+
+      introEditEl.value = state.intro;
+      updateIntroCount();
+      introPanel.style.display = 'block';
+      listPanel.style.display = 'block';
+      utmPanel.style.display = 'block';
+      refreshAll();
+
+      lastKeywordEl.textContent = '上次搜尋：「' + keyword + '」・' + (yearLimit ? yearLimit + '年之後' : '不限年份') + '・' + count + '篇';
+      setStatus('已找到 ' + picked.length + ' 篇真實文章（資料庫共 ' + ARTICLES.length + ' 篇有摘要文章）。');
+      generateBtn.disabled = false;
+    });
+  }
+
+  generateBtn.addEventListener('click', generate);
+  keywordInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') generate(); });
+  $('gvm-focus-cycle').addEventListener('click', cycleGlobalFocus);
+  focusYearSelect.addEventListener('change', function () { selectFocusYear(focusYearSelect.value); });
+
+  regenIntroBtn.addEventListener('click', function () {
+    if (!state.articles.length) return;
+    state.intro = buildIntro(state.keyword, state.articles.map(function (a) { return { y: a.y }; }));
+    introEditEl.value = state.intro;
+    updateIntroCount();
+    renderPreview();
+  });
+
+  polishIntroBtn.addEventListener('click', function () {
+    if (!state.articles.length) return;
+    var prompt = '請幫我把以下「編者的話」改寫得更吸引人、更適合作為 LINE 推播開頭，字數控制在 150～250 字以內，語氣專業但親切，主題是「' + state.keyword + '」：\n\n' + introEditEl.value;
+    copyTextToClipboard(prompt,
+      function () { setStatus('潤稿提示詞已複製，貼到 Claude 對話即可（本工具不會自動呼叫 API）。'); },
+      function () { setStatus('複製失敗，請手動選取文字複製。', true); }
+    );
+  });
+
+  resetBtn.addEventListener('click', function () {
+    state = { keyword: '', intro: '', articles: [] };
+    keywordInput.value = '';
+    introEditEl.value = '';
+    updateIntroCount();
+    introPanel.style.display = 'none';
+    listPanel.style.display = 'none';
+    utmPanel.style.display = 'none';
+    lastKeywordEl.textContent = '';
+    setStatus('資料庫共 ' + ARTICLES.length + ' 篇有摘要文章，可開始搜尋。');
+    renderPreview();
+    keywordInput.focus();
+  });
+
+  introEditEl.addEventListener('input', function () {
+    state.intro = introEditEl.value;
+    updateIntroCount();
+    renderPreview();
+  });
+
+  editListEl.addEventListener('input', function (e) {
+    var field = e.target.dataset.field, i = e.target.dataset.i;
+    if (field == null || i == null) return;
+    state.articles[i][field] = e.target.value;
+    if (field === 'summary') {
+      var countEl = editListEl.querySelector('span[data-count="' + i + '"]');
+      if (countEl) countEl.textContent = e.target.value.length + ' 字';
+    }
+    renderPreview();
+  });
+
+  advToggle.addEventListener('click', function () {
+    var open = advBody.classList.toggle('open');
+    advToggle.textContent = (open ? '▾' : '▸') + ' 進階設定・UTM 追蹤參數';
+  });
+
+  [utmSourceInput, utmMediumInput, utmCampaignInput, utmDateInput, utmFromInput].forEach(function (el) {
+    el.addEventListener('input', renderPreview);
+  });
+
+  function fallbackCopyText(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '0'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  function copyTextToClipboard(text, onSuccess, onFailure) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onSuccess, function () {
+        if (fallbackCopyText(text)) onSuccess(); else onFailure();
+      });
+    } else {
+      if (fallbackCopyText(text)) onSuccess(); else onFailure();
+    }
+  }
+
+  copyLinksBtn.addEventListener('click', function () {
+    if (!state.articles.length) return;
+    var lines = state.articles.map(function (a, i) {
+      return (i + 1) + '. ' + a.title + '\n' + appendUtm(a.url);
+    });
+    copyTextToClipboard(lines.join('\n\n'),
+      function () { setStatus('已複製全部連結到剪貼簿。'); },
+      function () { setStatus('複製失敗，請手動選取文字複製。', true); }
+    );
+  });
+
+  function buildStandaloneDoc() {
+    var css = [
+      '@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap");',
+      'body{margin:0;background:#fdfcfb;color:#2a2f36;font-family:"Noto Sans TC",sans-serif;}',
+      '.wrap{max-width:640px;margin:0 auto;padding:40px 24px 60px;}',
+      '.gvm-pv-masthead{text-align:center;margin-bottom:26px;}',
+      '.gvm-pv-eyebrow{font-size:10px;letter-spacing:.3em;color:#a9746e;text-transform:uppercase;font-weight:700;margin-bottom:6px;}',
+      '.gvm-pv-title{font-family:"Noto Serif TC",serif;font-weight:900;font-size:22px;color:#0d2038;margin:0 0 6px;}',
+      '.gvm-pv-sub{font-size:11.5px;color:#6b7280;}',
+      '.gvm-pv-date{font-size:11px;color:#4a6483;font-weight:700;letter-spacing:.05em;margin-top:8px;}',
+      '.gvm-pv-rule{width:40px;height:2px;background:#a9746e;margin:14px auto 0;}',
+      '.gvm-pv-section-divider{display:flex;align-items:center;gap:12px;margin:32px 0 22px;}',
+      '.gvm-pv-section-divider::before,.gvm-pv-section-divider::after{content:"";flex:1;height:1px;background:#dde3ea;}',
+      '.gvm-pv-section-divider span{font-size:10px;letter-spacing:.25em;color:#a9746e;text-transform:uppercase;font-weight:700;white-space:nowrap;}',
+      '.gvm-pv-intro-wrap{margin:0 0 22px;}',
+      '.gvm-pv-intro{font-family:"Noto Serif TC",serif;font-size:15.5px;font-weight:600;line-height:1.85;color:#2a2f36;border-left:3px solid #d9b8a9;padding:6px 0 6px 16px;white-space:pre-wrap;}',
+      '.gvm-pv-focus{margin:0 0 22px;}',
+      '.gvm-pv-focus-label{font-size:11px;letter-spacing:.15em;color:#4a6483;text-transform:uppercase;font-weight:700;margin-bottom:8px;}',
+      '.gvm-pv-focus-text{font-family:"Noto Serif TC",serif;font-size:15px;font-weight:600;line-height:1.85;color:#2a2f36;}',
+      '.gvm-pv-focus-source{font-size:11px;color:#6b7280;margin-top:10px;}',
+      '.gvm-pv-focus-source a{color:#4a6483;text-decoration:none;}',
+      '.gvm-pv-item{display:flex;gap:16px;padding:20px 0;}',
+      '.gvm-pv-item + .gvm-pv-item{border-top:1px solid #dde3ea;}',
+      '.gvm-pv-media{display:flex;flex-direction:column;align-items:flex-start;gap:8px;flex-shrink:0;width:76px;}',
+      '.gvm-pv-num{font-family:"Noto Serif TC",serif;font-weight:700;font-size:28px;color:#a9746e;line-height:1;text-align:left;}',
+      '.gvm-pv-thumb{width:76px;height:76px;border-radius:6px;object-fit:cover;background:#eef1f5;}',
+      '.gvm-pv-body{flex:1;min-width:0;}',
+      '.gvm-pv-source{font-size:10.5px;color:#4a6483;font-weight:700;letter-spacing:.04em;margin-bottom:5px;}',
+      '.gvm-pv-item-title{font-family:"Noto Serif TC",serif;font-size:15px;font-weight:700;color:#0d2038;margin:0 0 6px;line-height:1.5;}',
+      '.gvm-pv-summary{font-size:12.5px;line-height:1.7;color:#2a2f36;margin-bottom:8px;}',
+      '.gvm-pv-link{font-size:11.5px;color:#16325c;text-decoration:none;font-weight:700;border-bottom:1px solid #4a6483;padding-bottom:1px;}',
+      '.gvm-footnote{text-align:center;font-size:11px;color:#6b7280;margin-top:30px;padding-top:18px;border-top:1px solid #dde3ea;line-height:1.7;}',
+      '@media (max-width:900px){',
+      '.gvm-pv-item{flex-direction:column;}',
+      '.gvm-pv-media{width:100%;}',
+      '.gvm-pv-thumb{width:100%;height:auto;object-fit:unset;border-radius:8px;}',
+      '.gvm-pv-num{font-size:30px;}',
+      '.gvm-pv-intro{border-left:none;padding-left:0;}',
+      '}'
+    ].join('\n');
+    return '<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+      '<title>遠見線上讀｜' + escapeHtml(state.keyword) + '</title>' +
+      '<style>' + css + '</style></head><body><div class="wrap">' + previewBody.innerHTML + '</div></body></html>';
+  }
+
+  downloadHtmlBtn.addEventListener('click', function () {
+    if (!state.articles.length) return;
+    var blob = new Blob([buildStandaloneDoc()], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '遠見線上讀_' + state.keyword + '_' + formatToday('') + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setStatus('HTML 已下載，可直接開啟或轉發給同事。');
+  });
+
+  async function init() {
+    try {
+      var res = await fetch(DATA_URL);
+      var data = await res.json();
+      ARTICLES = data.articles;
+      generateBtn.disabled = false;
+      setStatus('資料庫共 ' + ARTICLES.length + ' 篇有摘要文章（1987–2026），可開始搜尋。');
+      computeGlobalFocus();
+    } catch (e) {
+      setStatus('資料庫載入失敗，請重新整理頁面', true);
+      console.error(e);
+    }
+  }
+
+  init();
+</script>
 </body>
 </html>
