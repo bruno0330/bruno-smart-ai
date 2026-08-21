@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- 深邃黑藍背景漸層 -->
+    <linearGradient id="bgSq22" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080b12"/>
+      <stop offset="50%" stop-color="#0e1422"/>
+      <stop offset="100%" stop-color="#121824"/>
+    </linearGradient>
+
+    <!-- 頂部頂級高光 -->
+    <linearGradient id="isoTopSq" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+
+    <!-- 正面中光 -->
+    <linearGradient id="isoFrontSq" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0369a1"/>
+      <stop offset="100%" stop-color="#075985"/>
+    </linearGradient>
+
+    <!-- 側面深層陰影 -->
+    <linearGradient id="isoSideSq" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c4a6e"/>
+      <stop offset="100%" stop-color="#082f49"/>
+    </linearGradient>
+
+    <!-- 發光光暈濾鏡 -->
+    <filter id="glowSq" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 背景：圓角正方形容器 -->
+  <rect width="512" height="512" rx="96" fill="url(#bgSq22)"/>
+  
+  <!-- 微細外邊框高光 -->
+  <rect width="510" height="510" x="1" y="1" rx="95" fill="none" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- 背景微弱輔助線 (強化精密感) -->
+  <g stroke="#38bdf8" stroke-width="0.8" opacity="0.12">
+    <circle cx="256" cy="235" r="160" fill="none" stroke-dasharray="4,8"/>
+    <line x1="256" y1="50" x2="256" y2="420"/>
+    <line x1="70" y1="235" x2="442" y2="235"/>
+  </g>
+
+  <!-- 核心 3D 等角立體模組 B 圖騰 (置中放大) -->
+  <g transform="translate(145, 110)" filter="url(#glowSq)">
+    <!-- 左上柱體 -->
+    <polygon points="0,20 34,0 34,92 0,112" fill="url(#isoFrontSq)"/>
+    <polygon points="34,0 60,13 60,105 34,92" fill="url(#isoSideSq)"/>
+    <polygon points="0,20 34,0 60,13 26,33" fill="url(#isoTopSq)"/>
+
+    <!-- 左下柱體 -->
+    <polygon points="0,126 34,106 34,198 0,218" fill="url(#isoFrontSq)"/>
+    <polygon points="34,106 60,119 60,211 34,198" fill="url(#isoSideSq)"/>
+    <polygon points="0,126 34,106 60,119 26,139" fill="url(#isoTopSq)"/>
+
+    <!-- 右上立體模組 -->
+    <polygon points="74,13 154,13 194,59 154,105 74,105" fill="url(#isoFrontSq)"/>
+    <polygon points="154,13 174,0 214,46 194,59" fill="url(#isoTopSq)"/>
+    <polygon points="194,59 214,46 174,92 154,105" fill="url(#isoSideSq)"/>
+    <!-- 核心鏤空切面 -->
+    <polygon points="94,33 140,33 160,59 140,85 94,85" fill="#080b12"/>
+
+    <!-- 右下立體模組 (跨度延伸) -->
+    <polygon points="74,119 166,119 214,165 166,211 74,211" fill="url(#isoFrontSq)"/>
+    <polygon points="166,119 186,106 234,152 214,165" fill="url(#isoTopSq)"/>
+    <polygon points="214,165 234,152 186,198 166,211" fill="url(#isoSideSq)"/>
+    <!-- 核心鏤空切面 -->
+    <polygon points="94,139 152,139 180,165 152,191 94,191" fill="#080b12"/>
+  </g>
+
+  <!-- 底部微型品牌標記 -->
+  <g transform="translate(256, 425)" text-anchor="middle">
+    <text font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="20" fill="#ffffff" letter-spacing="4">
+      BRUNO <tspan fill="#38bdf8">SMART AI</tspan>
+    </text>
+    <text y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="11" fill="#64748b" letter-spacing="6">
+      LIMITED
+    </text>
+  </g>
+</svg>

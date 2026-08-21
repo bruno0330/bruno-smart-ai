@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg22" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080b12"/>
+      <stop offset="100%" stop-color="#121824"/>
+    </linearGradient>
+
+    <!-- 頂部高光 -->
+    <linearGradient id="isoTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+
+    <!-- 正面中光 -->
+    <linearGradient id="isoFront" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0369a1"/>
+      <stop offset="100%" stop-color="#075985"/>
+    </linearGradient>
+
+    <!-- 側面陰影 -->
+    <linearGradient id="isoSide" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c4a6e"/>
+      <stop offset="100%" stop-color="#082f49"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="450" fill="url(#bg22)" rx="12"/>
+
+  <!-- 立體 3D 模組 B -->
+  <g transform="translate(140, 135)">
+    <!-- 左上柱體 -->
+    <polygon points="0,15 25,0 25,70 0,85" fill="url(#isoFront)"/>
+    <polygon points="25,0 45,10 45,80 25,70" fill="url(#isoSide)"/>
+    <polygon points="0,15 25,0 45,10 20,25" fill="url(#isoTop)"/>
+
+    <!-- 左下柱體 -->
+    <polygon points="0,95 25,80 25,150 0,165" fill="url(#isoFront)"/>
+    <polygon points="25,80 45,90 45,160 25,150" fill="url(#isoSide)"/>
+    <polygon points="0,95 25,80 45,90 20,105" fill="url(#isoTop)"/>
+
+    <!-- 右上立體模組 -->
+    <polygon points="55,10 115,10 145,45 115,80 55,80" fill="url(#isoFront)"/>
+    <polygon points="115,10 130,0 160,35 145,45" fill="url(#isoTop)"/>
+    <polygon points="145,45 160,35 130,70 115,80" fill="url(#isoSide)"/>
+    <polygon points="70,25 105,25 120,45 105,65 70,65" fill="#080b12"/>
+
+    <!-- 右下立體模組 -->
+    <polygon points="55,90 125,90 160,125 125,160 55,160" fill="url(#isoFront)"/>
+    <polygon points="125,90 140,80 175,115 160,125" fill="url(#isoTop)"/>
+    <polygon points="160,125 175,115 140,150 125,160" fill="url(#isoSide)"/>
+    <polygon points="70,105 115,105 135,125 115,145 70,145" fill="#080b12"/>
+  </g>
+
+  <!-- 文字排版 -->
+  <g transform="translate(390, 205)">
+    <text font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="44" fill="#ffffff" letter-spacing="2">
+      BRUNO <tspan fill="#38bdf8">SMART AI</tspan>
+    </text>
+    <g transform="translate(0, 26)">
+      <line x1="0" y1="12" x2="45" y2="12" stroke="#38bdf8" stroke-width="2"/>
+      <text x="55" y="16" font-family="'Arial Black', sans-serif" font-weight="900" font-size="12" fill="#ffffff" letter-spacing="3">
+        LTD.
+      </text>
+      <text x="115" y="16" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="12" fill="#94a3b8" letter-spacing="3">
+        MONOLITHIC INTELLIGENCE SUITE
+      </text>
+    </g>
+  </g>
+</svg>

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bruno Smart AI Ltd. — 部門總覽</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -23,15 +24,17 @@
     --purple-tint:#f0edfa; --purple-ic:#6f5bb0;
     --green-tint:#eaf5ec; --green-ic:#3f8a54;
     --teal-tint:#e7f6f3; --teal-ic:#1f8a76;
+    --brand:#0284c7; --brand-glow:#38bdf8;
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:#0e0e10; --surface:#18181b; --surface-2:#151517; --border:#2a2a2e;
+      --bg:#0a0d14; --surface:#121824; --surface-2:#0e131d; --border:#232b3a;
       --text:#f2f2f4; --text-2:#a4a4ad; --text-3:#6b6b74;
       --shadow-sm:0 1px 2px rgba(0,0,0,.3);
       --shadow-md:0 4px 16px rgba(0,0,0,.35), 0 1px 3px rgba(0,0,0,.25);
       --shadow-lg:0 10px 28px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.3);
       --navy:#7fa0c9; --navy-tint:#182234; --navy-strong:#a9c2e2;
+      --brand:#38bdf8; --brand-glow:#5fd0ff;
       --rose:#cf9f95; --rose-tint:#2a201e;
       --blue-tint:#182231; --blue-ic:#7fa5df;
       --pink-tint:#2a1c22; --pink-ic:#e191ac;
@@ -55,10 +58,10 @@
   }
   .brand{display:flex; align-items:center; gap:12px;}
   .logo{
-    width:44px; height:44px; border-radius:12px; background:var(--navy);
-    color:#fff; display:flex; align-items:center; justify-content:center;
-    font-weight:700; font-size:18px; box-shadow:var(--shadow-sm);
+    width:44px; height:44px; border-radius:12px; overflow:hidden;
+    box-shadow:var(--shadow-sm); flex-shrink:0;
   }
+  .logo img{width:100%; height:100%; display:block;}
   .brand-name{font-weight:700; font-size:19px; letter-spacing:-0.01em;}
   .brand-sub{font-size:13px; color:var(--text-2); margin-top:1px;}
 
@@ -70,7 +73,7 @@
   .progress-track{
     width:120px; height:6px; border-radius:99px; background:var(--border); overflow:hidden;
   }
-  .progress-fill{height:100%; width:9%; background:var(--navy); border-radius:99px;}
+  .progress-fill{height:100%; width:9%; background:linear-gradient(90deg, var(--brand), var(--brand-glow)); border-radius:99px;}
   .progress-label{font-size:13px; color:var(--text-2); white-space:nowrap;}
   .progress-label b{color:var(--text); font-weight:600;}
 
@@ -119,7 +122,7 @@
   .tile.soon .pill{background:var(--surface-2); color:var(--text-3);}
   .tile.soon .dot{background:var(--text-3);}
   .tile.soon{cursor:pointer;}
-  .tile.soon:hover{border-color:var(--text-3); box-shadow:var(--shadow-md);}
+  .tile.soon:hover{border-color:var(--brand); box-shadow:var(--shadow-md);}
 
   .tile.soon.c-blue .tile-icon{background:var(--blue-tint); color:var(--blue-ic);}
   .tile.soon.c-teal .tile-icon{background:var(--teal-tint); color:var(--teal-ic);}
@@ -152,7 +155,7 @@
 
   <div class="topbar">
     <div class="brand">
-      <div class="logo">B</div>
+      <div class="logo"><img src="assets/logo-mark.svg" alt="Bruno Smart AI Ltd."></div>
       <div>
         <div class="brand-name">Bruno Smart AI Ltd.</div>
         <div class="brand-sub">部門總覽</div>
@@ -167,7 +170,7 @@
   <div class="stats">
     <div class="stat"><div class="stat-num">6</div><div class="stat-label">組織處數</div></div>
     <div class="stat"><div class="stat-num">11</div><div class="stat-label">部門總數</div></div>
-    <div class="stat"><div class="stat-num">1</div><div class="stat-label">已啟用</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--brand)">1</div><div class="stat-label">已啟用</div></div>
     <div class="stat"><div class="stat-num">10</div><div class="stat-label">規劃中</div></div>
   </div>
 
