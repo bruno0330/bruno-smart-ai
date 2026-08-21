@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bruno Smart AI Ltd. — 部門總覽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.46.0/dist/tabler-icons.min.css">
+<style>
+  :root{
+    --bg:#f6f6f8; --surface:#ffffff; --surface-2:#fbfbfc; --border:#e7e7ea;
+    --text:#18181b; --text-2:#6b6b74; --text-3:#a4a4ad;
+    --shadow-sm:0 1px 2px rgba(20,20,30,.05);
+    --shadow-md:0 4px 16px rgba(20,20,30,.06), 0 1px 3px rgba(20,20,30,.04);
+    --shadow-lg:0 10px 28px rgba(20,20,30,.10), 0 2px 6px rgba(20,20,30,.05);
+    --navy:#16325c; --navy-tint:#e9eef4; --navy-strong:#0d1f3a;
+    --rose:#a9746e; --rose-tint:#f6ece9;
+    --blue-tint:#eaf1fd; --blue-ic:#3b6ea5;
+    --pink-tint:#fdeef2; --pink-ic:#c15b7d;
+    --amber-tint:#fdf3e3; --amber-ic:#b8842c;
+    --purple-tint:#f0edfa; --purple-ic:#6f5bb0;
+    --green-tint:#eaf5ec; --green-ic:#3f8a54;
+    --teal-tint:#e7f6f3; --teal-ic:#1f8a76;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e0e10; --surface:#18181b; --surface-2:#151517; --border:#2a2a2e;
+      --text:#f2f2f4; --text-2:#a4a4ad; --text-3:#6b6b74;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+      --shadow-md:0 4px 16px rgba(0,0,0,.35), 0 1px 3px rgba(0,0,0,.25);
+      --shadow-lg:0 10px 28px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.3);
+      --navy:#7fa0c9; --navy-tint:#182234; --navy-strong:#a9c2e2;
+      --rose:#cf9f95; --rose-tint:#2a201e;
+      --blue-tint:#182231; --blue-ic:#7fa5df;
+      --pink-tint:#2a1c22; --pink-ic:#e191ac;
+      --amber-tint:#2a2216; --amber-ic:#e0b25f;
+      --purple-tint:#211d2e; --purple-ic:#b3a1e6;
+      --green-tint:#1a2620; --green-ic:#7ac393;
+      --teal-tint:#182824; --teal-ic:#5fc4ab;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:"Inter","Noto Sans TC",-apple-system,sans-serif;
+    padding:40px 24px 100px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1000px; margin:0 auto;}
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:32px; flex-wrap:wrap; gap:16px;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .logo{
+    width:44px; height:44px; border-radius:12px; background:var(--navy);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:18px; box-shadow:var(--shadow-sm);
+  }
+  .brand-name{font-weight:700; font-size:19px; letter-spacing:-0.01em;}
+  .brand-sub{font-size:13px; color:var(--text-2); margin-top:1px;}
+
+  .progress-card{
+    display:flex; align-items:center; gap:12px; background:var(--surface);
+    border:1px solid var(--border); border-radius:12px; padding:10px 16px;
+    box-shadow:var(--shadow-sm);
+  }
+  .progress-track{
+    width:120px; height:6px; border-radius:99px; background:var(--border); overflow:hidden;
+  }
+  .progress-fill{height:100%; width:9%; background:var(--navy); border-radius:99px;}
+  .progress-label{font-size:13px; color:var(--text-2); white-space:nowrap;}
+  .progress-label b{color:var(--text); font-weight:600;}
+
+  .stats{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:12px; margin-bottom:36px;
+  }
+  .stat{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:16px 18px; box-shadow:var(--shadow-sm);
+  }
+  .stat-num{font-size:26px; font-weight:700; letter-spacing:-0.02em;}
+  .stat-label{font-size:13px; color:var(--text-2); margin-top:2px;}
+
+  .division{margin-bottom:30px;}
+  .division-head{
+    display:flex; align-items:center; gap:8px; margin-bottom:14px;
+  }
+  .division-name{font-size:14px; font-weight:600; color:var(--text);}
+  .division-count{font-size:12px; color:var(--text-3);}
+  .division-line{flex:1; height:1px; background:var(--border);}
+
+  .tiles{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr));
+    gap:14px;
+  }
+  .tile{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:20px; display:flex; flex-direction:column; gap:14px;
+    text-decoration:none; color:inherit; box-shadow:var(--shadow-sm);
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .tile-icon{
+    width:40px; height:40px; border-radius:11px; display:flex; align-items:center;
+    justify-content:center; font-size:20px;
+  }
+  .tile-name{font-weight:600; font-size:15px; letter-spacing:-0.01em;}
+  .tile-desc{font-size:13px; color:var(--text-2); line-height:1.5; margin:-6px 0 0;}
+  .pill{
+    display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:500;
+    padding:4px 10px 4px 8px; border-radius:99px; width:fit-content;
+  }
+  .dot{width:6px; height:6px; border-radius:99px;}
+
+  .tile.soon .tile-icon{background:var(--surface-2); color:var(--text-3);}
+  .tile.soon .pill{background:var(--surface-2); color:var(--text-3);}
+  .tile.soon .dot{background:var(--text-3);}
+  .tile.soon{cursor:pointer;}
+  .tile.soon:hover{border-color:var(--text-3); box-shadow:var(--shadow-md);}
+
+  .tile.soon.c-blue .tile-icon{background:var(--blue-tint); color:var(--blue-ic);}
+  .tile.soon.c-teal .tile-icon{background:var(--teal-tint); color:var(--teal-ic);}
+  .tile.soon.c-pink .tile-icon{background:var(--pink-tint); color:var(--pink-ic);}
+  .tile.soon.c-amber .tile-icon{background:var(--amber-tint); color:var(--amber-ic);}
+  .tile.soon.c-purple .tile-icon{background:var(--purple-tint); color:var(--purple-ic);}
+  .tile.soon.c-green .tile-icon{background:var(--green-tint); color:var(--green-ic);}
+
+  .tile.active{
+    cursor:pointer; border-color:var(--navy);
+    background:linear-gradient(180deg, var(--navy-tint), var(--surface) 70%);
+  }
+  .tile.active .tile-icon{background:var(--navy); color:#fff;}
+  .tile.active .tile-name{color:var(--navy-strong);}
+  .tile.active .pill{background:var(--rose-tint); color:var(--rose);}
+  .tile.active .dot{background:var(--rose);}
+  .tile.active:hover{transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:var(--rose);}
+
+  .toast{
+    position:fixed; left:50%; bottom:32px; transform:translate(-50%,12px);
+    background:var(--text); color:var(--bg); padding:11px 20px; border-radius:10px;
+    font-size:13px; font-weight:500; opacity:0; pointer-events:none;
+    transition:all .22s ease; box-shadow:var(--shadow-lg);
+  }
+  .toast.show{opacity:1; transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">B</div>
+      <div>
+        <div class="brand-name">Bruno Smart AI Ltd.</div>
+        <div class="brand-sub">部門總覽</div>
+      </div>
+    </div>
+    <div class="progress-card">
+      <div class="progress-track"><div class="progress-fill"></div></div>
+      <div class="progress-label"><b>1</b> / 11 部門啟用</div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-num">6</div><div class="stat-label">組織處數</div></div>
+    <div class="stat"><div class="stat-num">11</div><div class="stat-label">部門總數</div></div>
+    <div class="stat"><div class="stat-num">1</div><div class="stat-label">已啟用</div></div>
+    <div class="stat"><div class="stat-num">10</div><div class="stat-label">規劃中</div></div>
+  </div>
+
+  <div class="division">
+    <div class="division-head">
+      <span class="division-name">產品研發處</span>
+      <span class="division-count">2 部門</span>
+      <div class="division-line"></div>
+    </div>
+    <div class="tiles">
+      <div class="tile soon c-blue" onclick="notReady('市場調查部')">
+        <div class="tile-icon"><i class="ti ti-search"></i></div>
+        <div class="tile-name">市場調查部</div>
+        <p class="tile-desc">追蹤市場動態與競品情報</p>
+        <span class="pill"><span class="dot"></span>即將推出</span>
+      </div>
+      <div class="tile soon c-blue" onclick="notReady('輿情分析部')">
+        <div class="tile-icon"><i class="ti ti-message-2"></i></div>
+        <div class="tile-name">輿情分析部</div>
+        <p class="tile-desc">監測社群與新聞聲量，掌握輿情走向</p>
+        <span class="pill"><span class="dot"></span>即將推出</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="division">
+    <div class="division-head">
+      <span class="division-name">智能內容處</span>
+      <span class="division-count">2 部門</span>
+      <div class="division-line"></div>
+    </div>
+    <div class="tiles">
+      <a class="tile active" href="smart-curation/index.html">
+        <div class="tile-icon"><i class="ti ti-sparkles"></i></div>
+        <div class="tile-name">智能策展部</div>
+        <p class="tile-desc">從遠見文章庫策展選文，產出LINE推播頁面</p>
+        <span class="pill"><span class="dot"></span>遠見線上讀 · 點擊開啟</span>
+      </a>
+      <div class="tile soon c-teal" onclick="notReady('內容生成部')">
+        <div class="tile-icon"><i class="ti ti-pencil"></i></div>
+        <div class="tile-name">內容生成部</div>
+        <p class="tile-desc">協助草擬文章與行銷文案初稿</p>
+        <span class="pill"><span class="dot"></span>即將推出</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="division">
+    <div class="division-head">
+      <span class="division-name">會員經營處</span>
+      <span class="division-count">2 部門</span>
+      <div class="division-line"></div>
+    </div>
+    <div class="tiles">
+      <div class="tile soon c-pink" onclick="notReady('會員數據分析部')">
+        <div class="tile-icon"><i class="ti ti-chart-bar"></i></div>
+        <div class="tile-name">會員數據分析部</div>
+        <p class="tile-desc">分析會員行為與訂閱數據</p>
+        <span class="pill"><span class="dot"></span>即將推出</span>
+      </div>
+      <div class="tile soon c-pink" onclick="notReady('會員關懷部')">
+        <div class="tile-icon"><i class="ti ti-heart"></i></div>
+        <div class="tile-name">會員關懷部</div>
+        <p class="tile-desc">會員互動維繫與流失預警</p>
+        <span class="pill"><span class="dot"></span>即將推出</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="division">
+    <div class="division-head">
+      <span class="division-name">社群經營處</span>
+      <span class="division-count">1 部門</span>
+      <div class="division-line"></div>
+    </div>
+    <div class="tiles">
+      <div class="tile soon c-amber" onclick="notReady('LINE OA智能貼文部')">
+        <div class="tile-icon"><i class="ti ti-send"></i></div>
+        <div class="tile-name">LINE OA智能貼文部</div>
+        <p class="tile-desc">自動生成LINE官方帳號推播貼文</p>
+        <span class="pill"><span class="dot"></span>即將推出</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="division">
+    <div class="division-head">
+      <span class="division-name">圖文設計處</span>
+      <span class="division-count">1 部門</span>
+      <div class="division-line"></div>
+    </div>
+    <div class="tiles">
+      <div class="tile soon c-purple" onclick="notReady('視覺設計部')">
+        <div class="tile-icon"><i class="ti ti-palette"></i></div>
+        <div class="tile-name">視覺設計部</div>
+        <p class="tile-desc">產出社群與活動視覺素材</p>
+        <span class="pill"><span class="dot"></span>即將推出</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="division">
+    <div class="division-head">
+      <span class="division-name">秘書處</span>
+      <span class="division-count">2 部門</span>
+      <div class="division-line"></div>
+    </div>
+    <div class="tiles">
+      <div class="tile soon c-green" onclick="notReady('CEO秘書部')">
+        <div class="tile-icon"><i class="ti ti-mail"></i></div>
+        <div class="tile-name">CEO秘書部</div>
+        <p class="tile-desc">信件草擬與週報整理</p>
+        <span class="pill"><span class="dot"></span>即將推出</span>
+      </div>
+      <div class="tile soon c-green" onclick="notReady('客戶關懷部')">
+        <div class="tile-icon"><i class="ti ti-headset"></i></div>
+        <div class="tile-name">客戶關懷部</div>
+        <p class="tile-desc">自動化派信與客戶回覆</p>
+        <span class="pill"><span class="dot"></span>即將推出</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  function notReady(name){
+    var t = document.getElementById('toast');
+    t.textContent = name + ' 即將推出，敬請期待';
+    t.classList.add('show');
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 1800);
+  }
+</script>
+</body>
+</html>
