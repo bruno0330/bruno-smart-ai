@@ -473,7 +473,10 @@
   <div class="tab-panel active" id="tabPanelUtm" role="tabpanel" aria-labelledby="tabBtnUtm">
 
   <div class="card">
-    <h2>連結資訊</h2>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h2 style="margin:0;">連結資訊</h2>
+      <button class="btn-secondary" id="clearFormBtn" style="padding:5px 10px; font-size:12px;">清空表單</button>
+    </div>
 
     <div class="field-row">
       <div class="field">
@@ -507,7 +510,8 @@
       </div>
       <div class="field">
         <label for="campName">活動名稱</label>
-        <input type="text" id="campName" placeholder="anniversary">
+        <input type="text" id="campName" placeholder="anniversary" list="campNameSuggestions" autocomplete="off">
+        <datalist id="campNameSuggestions"></datalist>
       </div>
     </div>
 
@@ -546,18 +550,28 @@
   </div>
 
   <div class="card">
-    <h2>本次已產生</h2>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h2 style="margin:0;">本次已產生</h2>
+      <button class="btn-secondary" id="clearHistoryBtn" style="padding:5px 10px; font-size:12px;">清除全部</button>
+    </div>
     <div class="history-list" id="historyList">
       <div class="empty-state">還沒有產生任何連結</div>
     </div>
   </div>
 
   <details class="card reference">
+    <summary>批次產生多個版位</summary>
+    <p class="hint" style="margin:0 0 12px;">勾選多個版位，套用目前的原始網址／活動形式，一次產生所有連結並複製。版位本身有指定來源時會蓋過你目前選的 utm_source。</p>
+    <div id="batchChecklist" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow:auto; margin-bottom:14px;"></div>
+    <button class="btn-primary" id="batchGenerateBtn">批次產生並複製全部</button>
+  </details>
+
+  <details class="card reference">
     <summary>網站代號對照表</summary>
     <div class="code-table" id="codeTable"></div>
   </details>
 
-  <footer class="note">產生的連結僅存在本次瀏覽視窗，重新整理後會清空，請記得複製保存。</footer>
+  <footer class="note">產生的連結會保留在這台裝置的瀏覽器中，換裝置或清除瀏覽器資料才會消失，仍建議複製保存到其他地方。</footer>
 
   </div>
 
@@ -591,7 +605,7 @@
     ["lii", "領導影響力學院"]
   ];
 
-  var SOURCES = ["facebook", "line", "instagram", "linkedin", "youtube", "google_ads", "yahoo_ads", "edm", "email", "sms", "podcast", "clubhouse", "gvm", "cart", "linetoday", "yahoonews"];
+  var SOURCES = ["facebook", "line", "instagram", "linkedin", "youtube", "google_ads", "yahoo_ads", "edm", "email", "iterable", "sms", "podcast", "clubhouse", "gvm", "cart", "linetoday", "yahoonews"];
   var MEDIUMS = ["social", "paid_social", "cpc", "ppc", "edm", "email", "banner", "banner_frontpage", "banner_activity", "banner_shop", "text_hot", "text_article", "text_frontpage", "text_activity", "digital_text_frontpage_end", "bottomtext", "icon", "dm", "referral", "direct", "button", "menu_end", "link_shop"];
 
   // 官網版位對照：來自使用者提供的「官網版位的連動性.xlsx」（版位意義／utm_Medium／Content 三欄權威對照表）
@@ -829,21 +843,36 @@
     return lower && noSpace && noSpecial && noChinese;
   }
 
-  function buildUrl() {
+  function stripUtmParams(url) {
+    try {
+      var u = new URL(url);
+      var toDelete = [];
+      u.searchParams.forEach(function (_, key) {
+        if (/^utm_/i.test(key)) toDelete.push(key);
+      });
+      toDelete.forEach(function (key) { u.searchParams.delete(key); });
+      return u.toString();
+    } catch (e) {
+      return url;
+    }
+  }
+
+  function hasExistingUtmParams(url) {
+    return /[?&]utm_[a-zA-Z_]+=/i.test(url || "");
+  }
+
+  function buildUrlFor(srcVal, medVal, campaignVal, contentVal) {
     var base = rawField(origUrlEl.value);
     if (!base) return "";
-
     if (!base.match(/^https?:\/\//i)) return "";
-
-    var srcVal = effectiveValue(sourceEl, sourceCustomEl);
-    var medVal = effectiveValue(mediumEl, mediumCustomEl);
+    base = stripUtmParams(base);
 
     var params = [];
     if (srcVal) params.push("utm_source=" + encodeURIComponent(srcVal));
     if (medVal) params.push("utm_medium=" + encodeURIComponent(medVal));
-    if (campaignFullEl.value) params.push("utm_campaign=" + encodeURIComponent(campaignFullEl.value.trim()));
-    if (contentEl.value) {
-      var c = contentEl.value.trim();
+    if (campaignVal) params.push("utm_campaign=" + encodeURIComponent(campaignVal.trim()));
+    if (contentVal) {
+      var c = contentVal.trim();
       if (c && !c.startsWith("_")) c = "_" + c;
       params.push("utm_content=" + encodeURIComponent(c));
     }
@@ -851,6 +880,12 @@
 
     var sep = base.indexOf("?") === -1 ? "?" : "&";
     return base + sep + params.join("&");
+  }
+
+  function buildUrl() {
+    var srcVal = effectiveValue(sourceEl, sourceCustomEl);
+    var medVal = effectiveValue(mediumEl, mediumCustomEl);
+    return buildUrlFor(srcVal, medVal, campaignFullEl.value, contentEl.value);
   }
 
   function render() {
@@ -866,6 +901,9 @@
     } else if (!domainOk) {
       urlHintEl.textContent = "提醒：規則要求原始網址須為遠見網域（.gvm.com.tw）";
       urlHintEl.style.color = "var(--error)";
+    } else if (hasExistingUtmParams(origUrlEl.value)) {
+      urlHintEl.textContent = "偵測到原網址已有 UTM 參數，產生時會自動移除舊的、換成新的";
+      urlHintEl.style.color = "var(--ink-muted)";
     } else {
       urlHintEl.textContent = "";
     }
@@ -902,36 +940,76 @@
     toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2200);
   }
 
-  function addHistory(url) {
-    var emptyState = historyListEl.querySelector(".empty-state");
-    if (emptyState) emptyState.remove();
+  var HISTORY_KEY = "utm_history_v1";
 
-    var item = document.createElement("div");
-    item.className = "history-item";
-
-    var meta = document.createElement("div");
-    meta.className = "meta";
-    var campaign = document.createElement("div");
-    campaign.className = "campaign";
-    campaign.textContent = campaignFullEl.value + (contentEl.value ? " · " + contentEl.value : "");
-    var urlLine = document.createElement("div");
-    urlLine.className = "url";
-    urlLine.textContent = url;
-    meta.appendChild(campaign);
-    meta.appendChild(urlLine);
-
-    var btn = document.createElement("button");
-    btn.className = "btn-secondary";
-    btn.textContent = "複製";
-    btn.addEventListener("click", function () {
-      copyText(url);
-      showToast("已複製");
-    });
-
-    item.appendChild(meta);
-    item.appendChild(btn);
-    historyListEl.insertBefore(item, historyListEl.firstChild);
+  function loadHistory() {
+    try {
+      var raw = localStorage.getItem(HISTORY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
   }
+
+  function saveHistory(list) {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  var historyData = loadHistory();
+
+  function renderHistoryList() {
+    historyListEl.innerHTML = "";
+    if (!historyData.length) {
+      var empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "還沒有產生任何連結";
+      historyListEl.appendChild(empty);
+      return;
+    }
+    historyData.forEach(function (entry) {
+      var item = document.createElement("div");
+      item.className = "history-item";
+
+      var meta = document.createElement("div");
+      meta.className = "meta";
+      var campaign = document.createElement("div");
+      campaign.className = "campaign";
+      campaign.textContent = entry.campaign + (entry.content ? " · " + entry.content : "");
+      var urlLine = document.createElement("div");
+      urlLine.className = "url";
+      urlLine.textContent = entry.url;
+      meta.appendChild(campaign);
+      meta.appendChild(urlLine);
+
+      var btn = document.createElement("button");
+      btn.className = "btn-secondary";
+      btn.textContent = "複製";
+      btn.addEventListener("click", function () {
+        copyText(entry.url);
+        showToast("已複製");
+      });
+
+      item.appendChild(meta);
+      item.appendChild(btn);
+      historyListEl.appendChild(item);
+    });
+  }
+
+  function addHistory(url, campaignVal, contentVal) {
+    historyData.unshift({
+      campaign: campaignVal !== undefined ? campaignVal : campaignFullEl.value,
+      content: contentVal !== undefined ? contentVal : contentEl.value,
+      url: url
+    });
+    saveHistory(historyData);
+    renderHistoryList();
+  }
+
+  $("clearHistoryBtn").addEventListener("click", function () {
+    if (!historyData.length) return;
+    historyData = [];
+    saveHistory(historyData);
+    renderHistoryList();
+    showToast("已清除全部紀錄");
+  });
 
   function copyText(text) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -952,12 +1030,45 @@
     document.body.removeChild(ta);
   }
 
+  var CAMPNAME_KEY = "utm_campnames_v1";
+
+  function loadCampNames() {
+    try {
+      var raw = localStorage.getItem(CAMPNAME_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function renderCampNameOptions(list) {
+    var dl = $("campNameSuggestions");
+    dl.innerHTML = "";
+    list.forEach(function (name) {
+      var o = document.createElement("option");
+      o.value = name;
+      dl.appendChild(o);
+    });
+  }
+
+  function saveCampNameIfNew(name) {
+    name = (name || "").trim();
+    if (!name) return;
+    var list = loadCampNames();
+    if (list.indexOf(name) !== -1) return;
+    list.unshift(name);
+    if (list.length > 30) list = list.slice(0, 30);
+    try { localStorage.setItem(CAMPNAME_KEY, JSON.stringify(list)); } catch (e) {}
+    renderCampNameOptions(list);
+  }
+
+  renderCampNameOptions(loadCampNames());
+
   copyBtn.addEventListener("click", function () {
     var url = render();
     if (!url) return;
     copyText(url);
     showToast("已複製 UTM 網址");
     addHistory(url);
+    saveCampNameIfNew(campNameEl.value);
   });
 
   copyGoBtn.addEventListener("click", function () {
@@ -966,9 +1077,75 @@
     copyText(url);
     showToast("已複製，正在開啟 PicSee");
     addHistory(url);
+    saveCampNameIfNew(campNameEl.value);
     window.open("https://picsee.io/", "_blank", "noopener");
   });
 
+  $("clearFormBtn").addEventListener("click", function () {
+    siteCodeEl.selectedIndex = 0;
+    origUrlEl.value = "";
+    sourceEl.selectedIndex = 0;
+    sourceCustomEl.value = "";
+    sourceCustomEl.style.display = "none";
+    mediumEl.selectedIndex = 0;
+    mediumCustomEl.value = "";
+    mediumCustomEl.style.display = "none";
+    campNameEl.value = "";
+    campaignManuallyEdited = false;
+    placementPickEl.value = "";
+    placementHintEl.textContent = "";
+    contentEl.value = "";
+    updateCampaignAuto();
+    render();
+    showToast("已清空表單");
+  });
+
+  var batchChecklistEl = $("batchChecklist");
+  PLACEMENTS.forEach(function (p, i) {
+    var label = document.createElement("label");
+    label.style.cssText = "display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;";
+    var cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = String(i);
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(p.label));
+    batchChecklistEl.appendChild(label);
+  });
+
+  $("batchGenerateBtn").addEventListener("click", function () {
+    var checked = Array.prototype.filter.call(
+      batchChecklistEl.querySelectorAll("input[type=checkbox]"),
+      function (cb) { return cb.checked; }
+    );
+    if (!checked.length) { showToast("請至少勾選一個版位"); return; }
+    if (!rawField(origUrlEl.value)) { showToast("請先填寫原始網址"); return; }
+    if (!campaignFullEl.value) { showToast("請先填寫活動形式"); return; }
+
+    var baseSrc = effectiveValue(sourceEl, sourceCustomEl);
+    var campaignVal = campaignFullEl.value;
+    var urls = [];
+
+    checked.forEach(function (cb) {
+      var p = PLACEMENTS[Number(cb.value)];
+      var srcVal = p.source || baseSrc;
+      var url = buildUrlFor(srcVal, p.medium, campaignVal, p.content);
+      if (url) {
+        urls.push(url);
+        historyData.unshift({ campaign: campaignVal, content: p.content, url: url });
+      }
+    });
+
+    if (!urls.length) { showToast("沒有產生任何連結，請確認網址格式"); return; }
+
+    saveHistory(historyData);
+    renderHistoryList();
+    saveCampNameIfNew(campNameEl.value);
+    copyText(urls.join("\n"));
+    showToast("已產生 " + urls.length + " 組連結並複製");
+    checked.forEach(function (cb) { cb.checked = false; });
+  });
+
+  renderHistoryList();
   render();
 })();
 </script>
