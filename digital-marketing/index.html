@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>數位行銷部｜UTM 產生器</title>
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f6f4ee;
+    --surface: #ffffff;
+    --surface-alt: #efebe1;
+    --ink: #1c2130;
+    --ink-muted: #6b7180;
+    --border: #ded9cc;
+    --accent: #2a4b7c;
+    --accent-hover: #1e3a63;
+    --accent-soft: #e4ebf4;
+    --success: #2f7d5d;
+    --success-soft: #e3f0e9;
+    --error: #c23b3b;
+    --error-soft: #f8e7e6;
+    --radius: 8px;
+    --shadow: 0 1px 2px rgba(28,33,48,0.06), 0 6px 20px rgba(28,33,48,0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171f;
+      --surface: #1b2029;
+      --surface-alt: #232936;
+      --ink: #ece9e1;
+      --ink-muted: #949cb0;
+      --border: #2d3342;
+      --accent: #7fa6db;
+      --accent-hover: #a2c0e8;
+      --accent-soft: #223349;
+      --success: #63bb92;
+      --success-soft: #1e332a;
+      --error: #e08078;
+      --error-soft: #3a2325;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #14171f;
+    --surface: #1b2029;
+    --surface-alt: #232936;
+    --ink: #ece9e1;
+    --ink-muted: #949cb0;
+    --border: #2d3342;
+    --accent: #7fa6db;
+    --accent-hover: #a2c0e8;
+    --accent-soft: #223349;
+    --success: #63bb92;
+    --success-soft: #1e332a;
+    --error: #e08078;
+    --error-soft: #3a2325;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", "Noto Sans TC", "PingFang TC", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  header.masthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 14px;
+    margin-bottom: 28px;
+  }
+
+  header.masthead h1 {
+    font-family: "Fraunces", "Noto Serif TC", serif;
+    font-weight: 600;
+    font-size: 26px;
+    letter-spacing: 0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  header.masthead .sub {
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  .back-link {
+    display: inline-block;
+    font-size: 12.5px;
+    color: var(--accent);
+    text-decoration: none;
+    margin-bottom: 14px;
+  }
+  .back-link:hover { color: var(--accent-hover); }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 10px 4px;
+    margin-right: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    cursor: pointer;
+    position: relative;
+    top: 1px;
+  }
+
+  .tab-btn:hover { color: var(--ink); }
+
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .soon-card {
+    text-align: center;
+    padding: 56px 24px;
+  }
+
+  .soon-card .soon-icon {
+    font-family: "Fraunces", serif;
+    font-size: 15px;
+    color: var(--ink-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .soon-card p {
+    color: var(--ink-muted);
+    font-size: 13.5px;
+    margin: 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card h2 {
+    font-family: "Fraunces", "Noto Serif TC", serif;
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0 0 16px;
+    color: var(--ink);
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .field-row.single { grid-template-columns: 1fr; }
+
+  @media (max-width: 520px) {
+    .field-row { grid-template-columns: 1fr; }
+  }
+
+  .field label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+  }
+
+  .field label .req { color: var(--accent); font-weight: 600; }
+  .field label .opt { font-weight: 400; color: var(--ink-muted); opacity: 0.75; }
+
+  input[type="text"], input[type="month"], select {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-alt);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  input[type="text"]:focus, input[type="month"]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+
+  input::placeholder { color: var(--ink-muted); opacity: 0.6; }
+
+  .hint {
+    font-size: 11.5px;
+    color: var(--ink-muted);
+    margin-top: 5px;
+  }
+
+  .campaign-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 6px;
+    padding: 8px 11px;
+    margin-top: 8px;
+    word-break: break-all;
+  }
+
+  .checklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 5px 10px 5px 8px;
+    border-radius: 999px;
+    background: var(--surface-alt);
+    color: var(--ink-muted);
+    border: 1px solid var(--border);
+  }
+
+  .chip .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--ink-muted);
+    opacity: 0.5;
+    flex: none;
+  }
+
+  .chip.ok { background: var(--success-soft); color: var(--success); border-color: transparent; }
+  .chip.ok .dot { background: var(--success); opacity: 1; }
+  .chip.bad { background: var(--error-soft); color: var(--error); border-color: transparent; }
+  .chip.bad .dot { background: var(--error); opacity: 1; }
+
+  .output-card {
+    border-color: var(--accent);
+  }
+
+  .output-url {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    word-break: break-all;
+    color: var(--ink);
+    min-height: 20px;
+  }
+
+  .output-url.empty { color: var(--ink-muted); font-family: "IBM Plex Sans", sans-serif; }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease;
+  }
+
+  button:active { transform: scale(0.98); }
+
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled {
+    background: var(--border);
+    color: var(--ink-muted);
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background: var(--surface-alt);
+    color: var(--ink);
+    border-color: var(--border);
+  }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-secondary:disabled {
+    color: var(--ink-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: var(--ink);
+    color: var(--bg);
+    font-size: 13px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--surface-alt);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .history-item .meta {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .history-item .campaign {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .history-item .url {
+    font-size: 11.5px;
+    color: var(--ink-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .history-item button {
+    flex: none;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .empty-state {
+    color: var(--ink-muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 8px 0;
+  }
+
+  .reference summary {
+    cursor: pointer;
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    font-weight: 500;
+  }
+
+  .reference[open] summary { margin-bottom: 12px; }
+
+  .code-table {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px 14px;
+    font-size: 12.5px;
+  }
+
+  .code-table div {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .code-table .code {
+    font-family: "IBM Plex Mono", monospace;
+    color: var(--accent);
+  }
+
+  footer.note {
+    font-size: 12px;
+    color: var(--ink-muted);
+    text-align: center;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <a class="back-link" href="../index.html">← 回入口頁</a>
+  <header class="masthead">
+    <h1>數位行銷部</h1>
+    <span class="sub">GVM · Digital Marketing</span>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" id="tabBtnUtm" role="tab" aria-selected="true" aria-controls="tabPanelUtm">UTM 產生器</button>
+    <button class="tab-btn" id="tabBtnSoon" role="tab" aria-selected="false" aria-controls="tabPanelSoon">待開發</button>
+  </nav>
+
+  <div class="tab-panel active" id="tabPanelUtm" role="tabpanel" aria-labelledby="tabBtnUtm">
+
+  <div class="card">
+    <h2>連結資訊</h2>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="siteCode">網站代號 <span class="req">必填</span></label>
+        <select id="siteCode"></select>
+      </div>
+      <div class="field">
+        <label for="origUrl">原始網址 <span class="req">必填</span></label>
+        <input type="text" id="origUrl" placeholder="https://cart.gvm.com.tw/...">
+        <div class="hint" id="urlHint"></div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="source">utm_source 來源 <span class="req">必填</span></label>
+        <select id="source"></select>
+        <input type="text" id="sourceCustom" placeholder="輸入自訂來源" style="display:none; margin-top:6px;">
+      </div>
+      <div class="field">
+        <label for="medium">utm_medium 媒介 <span class="req">必填</span></label>
+        <select id="medium"></select>
+        <input type="text" id="mediumCustom" placeholder="輸入自訂媒介" style="display:none; margin-top:6px;">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="campMonth">活動年月</label>
+        <input type="month" id="campMonth">
+      </div>
+      <div class="field">
+        <label for="campName">活動名稱</label>
+        <input type="text" id="campName" placeholder="anniversary">
+      </div>
+    </div>
+
+    <div class="field campaign-final">
+      <label for="campaignFull">utm_campaign 活動形式 <span class="req">必填</span> <span class="opt">可直接編輯覆蓋</span></label>
+      <input type="text" id="campaignFull" placeholder="gvm_202608_anniversary">
+    </div>
+
+    <div class="field-row single" style="margin-top:14px;">
+      <div class="field">
+        <label for="placementPick">官網版位快速選擇 <span class="opt">選填，自動帶入 medium／content</span></label>
+        <select id="placementPick">
+          <option value="">－－ 不使用，手動填 content －－</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field-row single">
+      <div class="field">
+        <label for="content">utm_content 版位內容 <span class="opt">選填</span></label>
+        <input type="text" id="content" placeholder="post_0821">
+        <div class="hint" id="placementHint"></div>
+      </div>
+    </div>
+
+    <div class="checklist" id="checklist"></div>
+  </div>
+
+  <div class="card output-card">
+    <h2>產出 UTM 網址</h2>
+    <div class="output-url empty" id="outputUrl">填好左側欄位後，這裡會自動組出完整網址</div>
+    <div class="actions">
+      <button class="btn-primary" id="copyBtn" disabled>複製 UTM 網址</button>
+      <button class="btn-secondary" id="copyGoBtn" disabled>複製並前往 PicSee 縮網址</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>本次已產生</h2>
+    <div class="history-list" id="historyList">
+      <div class="empty-state">還沒有產生任何連結</div>
+    </div>
+  </div>
+
+  <details class="card reference">
+    <summary>網站代號對照表</summary>
+    <div class="code-table" id="codeTable"></div>
+  </details>
+
+  <footer class="note">產生的連結僅存在本次瀏覽視窗，重新整理後會清空，請記得複製保存。</footer>
+
+  </div>
+
+  <div class="tab-panel" id="tabPanelSoon" role="tabpanel" aria-labelledby="tabBtnSoon">
+    <div class="card soon-card">
+      <div class="soon-icon">待開發</div>
+      <p>這個功能還在規劃中，之後會加到這裡。</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var SITE_CODES = [
+    ["gvm", "遠見行銷"],
+    ["gv", "遠見編輯"],
+    ["ad", "遠見整傳"],
+    ["health", "健康"],
+    ["ct", "城巿學"],
+    ["gvlf", "華人精英"],
+    ["esg", "ESG 遠見"],
+    ["fifty", "50+"],
+    ["bz", "天下文化"],
+    ["fp", "未來親子"],
+    ["hbr", "HBR"],
+    ["classone", "1號課堂"],
+    ["member", "會員中心"],
+    ["lii", "領導影響力學院"]
+  ];
+
+  var SOURCES = ["facebook", "line", "instagram", "linkedin", "youtube", "google_ads", "yahoo_ads", "edm", "email", "sms", "podcast", "clubhouse", "gvm", "cart", "linetoday", "yahoonews"];
+  var MEDIUMS = ["social", "paid_social", "cpc", "ppc", "edm", "email", "banner", "banner_frontpage", "banner_activity", "banner_shop", "text_hot", "text_article", "text_frontpage", "text_activity", "digital_text_frontpage_end", "bottomtext", "icon", "dm", "referral", "direct", "button", "menu_end", "link_shop"];
+
+  // 官網版位對照：來自使用者提供的「官網版位的連動性.xlsx」（版位意義／utm_Medium／Content 三欄權威對照表）
+  // source 欄位只在確定是官網站內版位時才帶入 "gvm"；社群／EDM／紙本等其他通路留空，交給使用者自己選
+  // note 欄位標記「疑似特定活動遺留值、非通用樣板」的項目，會顯示在版位提示裡
+  var PLACEMENTS = [
+    { label: "線上讀封面文章置底文字 1", medium: "digital_text_frontpage_end", content: "_version1", source: "gvm" },
+    { label: "線上讀封面文章置底文字 2", medium: "digital_text_frontpage_end", content: "_version2", source: "gvm" },
+    { label: "線上讀封面文章置底文字 3", medium: "digital_text_frontpage_end", content: "_version3", source: "gvm" },
+    { label: "線上讀封面文章置底文字 4", medium: "digital_text_frontpage_end", content: "_version4", source: "gvm" },
+    { label: "文章中文字廣告", medium: "text_article", content: "_text_article_middle", source: "gvm" },
+    { label: "線上讀文字廣告（文章頁內文文字）", medium: "text_article", content: "_text_article_middle", source: "gvm" },
+    { label: "banner 首頁右下行銷（300×110）", medium: "banner_frontpage", content: "_frontpagedisplay_300x110", source: "gvm" },
+    { label: "banner 首頁右上行銷（300×250／970×250）", medium: "banner_frontpage", content: "_frontpagedisplay_300x250_970X250", source: "gvm" },
+    { label: "訂購專區 banner（桌機1920×594／手機375×281）", medium: "banner_shop", content: "_display_", source: "gvm" },
+    { label: "活動列表 banner（桌機1920×594／手機375×281）", medium: "banner_activity", content: "_display_", source: "gvm" },
+    { label: "線上讀訂閱頁", medium: "banner_shop", content: "_display_", source: "gvm" },
+    { label: "banner Monster MPU（300×250／300×600）", medium: "banner", content: "_display_monstermpu", source: "gvm" },
+    { label: "banner Sky Billboard（970×250／300×250）", medium: "banner", content: "_display_skybillboard", source: "gvm" },
+    { label: "banner Diamond Billboard（970×250／300×250）", medium: "banner", content: "_display_diamondbillboard", source: "gvm" },
+    { label: "banner Targeting BN（970×250／300×250）", medium: "banner", content: "_display_targetingbanner", source: "gvm" },
+    { label: "In-article MPU-2（300×250）", medium: "banner", content: "_display_In-article_mpu2", source: "gvm" },
+    { label: "Menu 下方行銷文字", medium: "menu_end", content: "_text_menu_end", source: "gvm" },
+    { label: "文字廣告（熱門快訊）", medium: "text_hot", content: "_text_hot7", source: "gvm", note: "content 尾碼「7」為既有值，待確認是否固定版位編號" },
+    { label: "置底文字", medium: "bottomtext", content: "_text_float_", source: "gvm" },
+    { label: "懸浮icon", medium: "icon", content: "_content_icon", source: "gvm" },
+    { label: "電子報banner2", medium: "email", content: "_bn2_300x250", note: "source 非官網站內，待你選擇（可能是 edm／iterable 等）" },
+    { label: "紙本文宣qrcode", medium: "direct", content: "_qrcode_ad_", note: "source 非官網站內，待你選擇" },
+    { label: "官網置底文字", medium: "text_frontpage", content: "_text_frontpage_end", source: "gvm" },
+    { label: "夾寄dm", medium: "dm", content: "_paper_ad_", note: "source 非官網站內，待你選擇" },
+    { label: "貼文（圖文）", medium: "social", content: "_post_banner_", note: "source 非官網站內，待你選擇（facebook／line 等）" },
+    { label: "貼文", medium: "social", content: "_post_article_", note: "source 非官網站內，待你選擇（facebook／line 等）" },
+    { label: "限時動態", medium: "social", content: "_story", note: "source 非官網站內，待你選擇（facebook／line 等）" }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function wireTab(btnId, panelId) {
+    $(btnId).addEventListener("click", function () {
+      document.querySelectorAll(".tab-btn").forEach(function (b) {
+        b.classList.remove("active");
+        b.setAttribute("aria-selected", "false");
+      });
+      document.querySelectorAll(".tab-panel").forEach(function (p) { p.classList.remove("active"); });
+      $(btnId).classList.add("active");
+      $(btnId).setAttribute("aria-selected", "true");
+      $(panelId).classList.add("active");
+    });
+  }
+  wireTab("tabBtnUtm", "tabPanelUtm");
+  wireTab("tabBtnSoon", "tabPanelSoon");
+
+  var siteCodeEl = $("siteCode"),
+      origUrlEl = $("origUrl"),
+      sourceEl = $("source"),
+      sourceCustomEl = $("sourceCustom"),
+      mediumEl = $("medium"),
+      mediumCustomEl = $("mediumCustom"),
+      placementPickEl = $("placementPick"),
+      placementHintEl = $("placementHint"),
+      campMonthEl = $("campMonth"),
+      campNameEl = $("campName"),
+      campaignFullEl = $("campaignFull"),
+      contentEl = $("content"),
+      urlHintEl = $("urlHint"),
+      checklistEl = $("checklist"),
+      outputUrlEl = $("outputUrl"),
+      copyBtn = $("copyBtn"),
+      copyGoBtn = $("copyGoBtn"),
+      historyListEl = $("historyList"),
+      codeTableEl = $("codeTable"),
+      toastEl = $("toast");
+
+  SITE_CODES.forEach(function (pair) {
+    var opt = document.createElement("option");
+    opt.value = pair[0];
+    opt.textContent = pair[1] + "（" + pair[0] + "）";
+    siteCodeEl.appendChild(opt);
+  });
+
+  SITE_CODES.forEach(function (pair) {
+    var row = document.createElement("div");
+    var name = document.createElement("span");
+    name.textContent = pair[1];
+    var code = document.createElement("span");
+    code.className = "code";
+    code.textContent = pair[0];
+    row.appendChild(name);
+    row.appendChild(code);
+    codeTableEl.appendChild(row);
+  });
+
+  var CUSTOM_VALUE = "__custom__";
+
+  function populateSelect(selectEl, options) {
+    options.forEach(function (v) {
+      var o = document.createElement("option");
+      o.value = v;
+      o.textContent = v;
+      selectEl.appendChild(o);
+    });
+    var customOpt = document.createElement("option");
+    customOpt.value = CUSTOM_VALUE;
+    customOpt.textContent = "其他（自行輸入）";
+    selectEl.appendChild(customOpt);
+  }
+
+  populateSelect(sourceEl, SOURCES);
+  populateSelect(mediumEl, MEDIUMS);
+
+  function wireCustomToggle(selectEl, customEl) {
+    selectEl.addEventListener("change", function () {
+      var isCustom = selectEl.value === CUSTOM_VALUE;
+      customEl.style.display = isCustom ? "block" : "none";
+      if (isCustom) customEl.focus();
+    });
+  }
+  wireCustomToggle(sourceEl, sourceCustomEl);
+  wireCustomToggle(mediumEl, mediumCustomEl);
+
+  function effectiveValue(selectEl, customEl) {
+    return selectEl.value === CUSTOM_VALUE ? customEl.value.trim() : selectEl.value;
+  }
+
+  function setSelectOrCustom(selectEl, customEl, value) {
+    var hasOption = Array.prototype.some.call(selectEl.options, function (o) { return o.value === value; });
+    if (hasOption) {
+      selectEl.value = value;
+      customEl.style.display = "none";
+    } else {
+      selectEl.value = CUSTOM_VALUE;
+      customEl.style.display = "block";
+      customEl.value = value;
+    }
+  }
+
+  PLACEMENTS.forEach(function (p, i) {
+    var o = document.createElement("option");
+    o.value = String(i);
+    o.textContent = p.label;
+    placementPickEl.appendChild(o);
+  });
+
+  placementPickEl.addEventListener("change", function () {
+    if (placementPickEl.value === "") {
+      placementHintEl.textContent = "";
+      return;
+    }
+    var p = PLACEMENTS[Number(placementPickEl.value)];
+    if (p.source) setSelectOrCustom(sourceEl, sourceCustomEl, p.source);
+    setSelectOrCustom(mediumEl, mediumCustomEl, p.medium);
+    contentEl.value = p.content;
+
+    var hintParts = [];
+    hintParts.push(p.source ? ("已帶入 source=" + p.source + "、medium=" + p.medium) : ("已帶入 medium=" + p.medium + "，source 請自行選擇"));
+    if (p.note) hintParts.push("⚠ " + p.note);
+    placementHintEl.textContent = hintParts.join("　");
+    render();
+  });
+
+  var now = new Date();
+  campMonthEl.value = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+
+  var campaignManuallyEdited = false;
+  var lastAutoCampaign = "";
+
+  function sanitize(str) {
+    return (str || "")
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "_")
+      .replace(/[^a-z0-9_]/g, "");
+  }
+
+  function updateCampaignAuto() {
+    if (campaignManuallyEdited) return;
+    var site = siteCodeEl.value || "gvm";
+    var yyyymm = (campMonthEl.value || "").replace("-", "");
+    var name = sanitize(campNameEl.value);
+    var composed = site + "_";
+    if (yyyymm) composed += yyyymm + "_";
+    composed += name;
+    lastAutoCampaign = composed;
+    campaignFullEl.value = composed;
+  }
+
+  campaignFullEl.addEventListener("input", function () {
+    campaignManuallyEdited = campaignFullEl.value !== lastAutoCampaign;
+  });
+
+  [siteCodeEl, campMonthEl, campNameEl].forEach(function (el) {
+    el.addEventListener("input", updateCampaignAuto);
+    el.addEventListener("change", updateCampaignAuto);
+  });
+
+  function rawField(str) { return (str || "").trim(); }
+
+  function checkFormat(str) {
+    if (!str) return { hasValue: false, lower: true, noSpace: true, noSpecial: true };
+    return {
+      hasValue: true,
+      lower: str === str.toLowerCase(),
+      noSpace: !/\s/.test(str),
+      noSpecial: /^[a-z0-9_\-]*$/i.test(str)
+    };
+  }
+
+  function renderChecklist() {
+    var srcVal = effectiveValue(sourceEl, sourceCustomEl);
+    var medVal = effectiveValue(mediumEl, mediumCustomEl);
+    var combined = [srcVal, medVal, campaignFullEl.value, contentEl.value].join(" ");
+    var lower = combined === combined.toLowerCase();
+    var noSpace = !/\s/.test(srcVal) && !/\s/.test(medVal) && !/\s/.test(campaignFullEl.value) && !/\s/.test(contentEl.value);
+    var noSpecial = /^[a-z0-9_\-]*$/i.test(srcVal) && /^[a-z0-9_\-]*$/i.test(medVal) && /^[a-z0-9_\-]*$/i.test(campaignFullEl.value) && /^[a-z0-9_\-]*$/i.test(contentEl.value);
+    var noChinese = !/[一-鿿]/.test(combined);
+
+    var checks = [
+      ["全部小寫英文", lower],
+      ["無空格", noSpace],
+      ["無特殊符號", noSpecial],
+      ["無中文字元", noChinese]
+    ];
+
+    checklistEl.innerHTML = "";
+    checks.forEach(function (c) {
+      var chip = document.createElement("span");
+      chip.className = "chip " + (c[1] ? "ok" : "bad");
+      var dot = document.createElement("span");
+      dot.className = "dot";
+      chip.appendChild(dot);
+      chip.appendChild(document.createTextNode(c[0]));
+      checklistEl.appendChild(chip);
+    });
+
+    return lower && noSpace && noSpecial && noChinese;
+  }
+
+  function buildUrl() {
+    var base = rawField(origUrlEl.value);
+    if (!base) return "";
+
+    if (!base.match(/^https?:\/\//i)) return "";
+
+    var srcVal = effectiveValue(sourceEl, sourceCustomEl);
+    var medVal = effectiveValue(mediumEl, mediumCustomEl);
+
+    var params = [];
+    if (srcVal) params.push("utm_source=" + encodeURIComponent(srcVal));
+    if (medVal) params.push("utm_medium=" + encodeURIComponent(medVal));
+    if (campaignFullEl.value) params.push("utm_campaign=" + encodeURIComponent(campaignFullEl.value.trim()));
+    if (contentEl.value) {
+      var c = contentEl.value.trim();
+      if (c && !c.startsWith("_")) c = "_" + c;
+      params.push("utm_content=" + encodeURIComponent(c));
+    }
+    if (!params.length) return "";
+
+    var sep = base.indexOf("?") === -1 ? "?" : "&";
+    return base + sep + params.join("&");
+  }
+
+  function render() {
+    updateCampaignAuto();
+    var validFormat = renderChecklist();
+
+    var domainOk = rawField(origUrlEl.value).indexOf(".gvm.com.tw") !== -1;
+    if (!origUrlEl.value) {
+      urlHintEl.textContent = "";
+    } else if (!origUrlEl.value.match(/^https?:\/\//i)) {
+      urlHintEl.textContent = "網址需以 http:// 或 https:// 開頭";
+      urlHintEl.style.color = "var(--error)";
+    } else if (!domainOk) {
+      urlHintEl.textContent = "提醒：規則要求原始網址須為遠見網域（.gvm.com.tw）";
+      urlHintEl.style.color = "var(--error)";
+    } else {
+      urlHintEl.textContent = "";
+    }
+
+    var url = buildUrl();
+    var required = effectiveValue(sourceEl, sourceCustomEl) && effectiveValue(mediumEl, mediumCustomEl) && campaignFullEl.value && origUrlEl.value;
+
+    if (url) {
+      outputUrlEl.textContent = url;
+      outputUrlEl.classList.remove("empty");
+    } else {
+      outputUrlEl.textContent = "填好左側欄位後，這裡會自動組出完整網址";
+      outputUrlEl.classList.add("empty");
+    }
+
+    var canAct = !!(url && required && validFormat);
+    copyBtn.disabled = !canAct;
+    copyGoBtn.disabled = !canAct;
+
+    return url;
+  }
+
+  var allFields = [siteCodeEl, origUrlEl, sourceEl, sourceCustomEl, mediumEl, mediumCustomEl, campMonthEl, campNameEl, campaignFullEl, contentEl, placementPickEl];
+  allFields.forEach(function (el) {
+    el.addEventListener("input", render);
+    el.addEventListener("change", render);
+  });
+
+  var toastTimer;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2200);
+  }
+
+  function addHistory(url) {
+    var emptyState = historyListEl.querySelector(".empty-state");
+    if (emptyState) emptyState.remove();
+
+    var item = document.createElement("div");
+    item.className = "history-item";
+
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    var campaign = document.createElement("div");
+    campaign.className = "campaign";
+    campaign.textContent = campaignFullEl.value + (contentEl.value ? " · " + contentEl.value : "");
+    var urlLine = document.createElement("div");
+    urlLine.className = "url";
+    urlLine.textContent = url;
+    meta.appendChild(campaign);
+    meta.appendChild(urlLine);
+
+    var btn = document.createElement("button");
+    btn.className = "btn-secondary";
+    btn.textContent = "複製";
+    btn.addEventListener("click", function () {
+      copyText(url);
+      showToast("已複製");
+    });
+
+    item.appendChild(meta);
+    item.appendChild(btn);
+    historyListEl.insertBefore(item, historyListEl.firstChild);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function () { fallbackCopy(text); });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  copyBtn.addEventListener("click", function () {
+    var url = render();
+    if (!url) return;
+    copyText(url);
+    showToast("已複製 UTM 網址");
+    addHistory(url);
+  });
+
+  copyGoBtn.addEventListener("click", function () {
+    var url = render();
+    if (!url) return;
+    copyText(url);
+    showToast("已複製，正在開啟 PicSee");
+    addHistory(url);
+    window.open("https://picsee.io/", "_blank", "noopener");
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
