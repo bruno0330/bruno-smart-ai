@@ -78,6 +78,24 @@
   .gvm-status.error{ color:#b5432f; }
   .gvm-hint{ font-size:11.5px; color:var(--text-soft); margin-top:8px; }
 
+  .gvm-btn-feedback{
+    font-size:11.5px; color:var(--rose); font-weight:600; opacity:0; transition:opacity .15s ease;
+  }
+  .gvm-btn-feedback.show{ opacity:1; }
+
+  .gvm-scroll-hint{
+    position:fixed; left:50%; bottom:20px; transform:translateX(-50%) translateY(0);
+    background:var(--navy); color:#fff; font-size:13px; font-weight:600;
+    padding:10px 18px; border-radius:999px; box-shadow:0 6px 20px rgba(0,0,0,.25);
+    display:none; align-items:center; gap:6px; z-index:20; cursor:pointer; border:none;
+    opacity:1; transition:opacity .25s ease, transform .25s ease;
+  }
+  .gvm-scroll-hint.show{ display:flex; }
+  .gvm-scroll-hint.hide{ opacity:0; transform:translateX(-50%) translateY(12px); pointer-events:none; }
+  .gvm-scroll-hint .arrow{ display:inline-block; animation:gvm-bounce 1.2s infinite; }
+  @keyframes gvm-bounce{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(4px); } }
+  @media (min-width:901px){ .gvm-scroll-hint{ display:none !important; } }
+
   .gvm-intro-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
   .gvm-intro-edit{
     width:100%; min-height:130px; padding:10px 12px; border:1px solid #ccd3dc; border-radius:4px;
@@ -221,7 +239,7 @@
           <div class="gvm-panel-label" style="margin:0">2・編者的話</div>
           <div style="display:flex; gap:8px;">
             <button id="gvm-regen-intro" class="gvm-btn-outline">換一版</button>
-            <button id="gvm-polish-intro" class="gvm-btn-outline">用 AI 潤稿</button>
+            <button id="gvm-polish-intro" class="gvm-btn-outline">複製潤稿提示詞</button>
           </div>
         </div>
         <textarea id="gvm-intro-edit" class="gvm-intro-edit"></textarea>
@@ -289,6 +307,10 @@
     </div>
   </div>
 </div>
+
+<button id="gvm-scroll-hint" class="gvm-scroll-hint" type="button">
+  <span class="arrow">↓</span> 往下滑看即時預覽
+</button>
 
 <script>
   var $ = function (id) { return document.getElementById(id); };
@@ -767,12 +789,74 @@
       lastKeywordEl.textContent = '上次搜尋：「' + keyword + '」・' + (yearLimit ? yearLimit + '年之後' : '不限年份') + '・' + count + '篇';
       setStatus('已找到 ' + picked.length + ' 篇真實文章（資料庫共 ' + ARTICLES.length + ' 篇有摘要文章）。');
       generateBtn.disabled = false;
+      showScrollHint();
     });
   }
 
+  function showButtonFeedback(btn, msg, seconds) {
+    seconds = seconds || 2;
+    var badge = btn._gvmFeedbackBadge;
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'gvm-btn-feedback';
+      btn.insertAdjacentElement('afterend', badge);
+      btn._gvmFeedbackBadge = badge;
+    }
+    clearInterval(btn._gvmFeedbackTimer);
+    btn.disabled = true;
+    var remaining = seconds;
+    function tick() {
+      badge.textContent = msg + '（' + remaining + '）';
+      badge.classList.add('show');
+      if (remaining <= 0) {
+        badge.classList.remove('show');
+        btn.disabled = false;
+        clearInterval(btn._gvmFeedbackTimer);
+        return;
+      }
+      remaining--;
+    }
+    tick();
+    btn._gvmFeedbackTimer = setInterval(tick, 1000);
+  }
+
+  var scrollHintEl = $('gvm-scroll-hint');
+  var scrollHintTimer = null;
+
+  function showScrollHint() {
+    if (window.innerWidth > 900) return;
+    scrollHintEl.classList.remove('hide');
+    scrollHintEl.classList.add('show');
+    clearTimeout(scrollHintTimer);
+    scrollHintTimer = setTimeout(hideScrollHint, 6000);
+  }
+
+  function hideScrollHint() {
+    scrollHintEl.classList.add('hide');
+    clearTimeout(scrollHintTimer);
+    setTimeout(function () { scrollHintEl.classList.remove('show'); }, 250);
+  }
+
+  scrollHintEl.addEventListener('click', function () {
+    var target = document.querySelector('.gvm-preview-wrap');
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    hideScrollHint();
+  });
+
+  window.addEventListener('scroll', function () {
+    if (!scrollHintEl.classList.contains('show')) return;
+    var target = document.querySelector('.gvm-preview-wrap');
+    if (target && target.getBoundingClientRect().top < window.innerHeight * 0.6) {
+      hideScrollHint();
+    }
+  }, { passive: true });
+
   generateBtn.addEventListener('click', generate);
   keywordInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') generate(); });
-  $('gvm-focus-cycle').addEventListener('click', cycleGlobalFocus);
+  $('gvm-focus-cycle').addEventListener('click', function () {
+    cycleGlobalFocus();
+    showButtonFeedback($('gvm-focus-cycle'), '已換一篇');
+  });
   focusYearSelect.addEventListener('change', function () { selectFocusYear(focusYearSelect.value); });
 
   regenIntroBtn.addEventListener('click', function () {
@@ -781,13 +865,17 @@
     introEditEl.value = state.intro;
     updateIntroCount();
     renderPreview();
+    showButtonFeedback(regenIntroBtn, '已換一版');
   });
 
   polishIntroBtn.addEventListener('click', function () {
     if (!state.articles.length) return;
     var prompt = '請幫我把以下「編者的話」改寫得更吸引人、更適合作為 LINE 推播開頭，字數控制在 150～250 字以內，語氣專業但親切，主題是「' + state.keyword + '」：\n\n' + introEditEl.value;
     copyTextToClipboard(prompt,
-      function () { setStatus('潤稿提示詞已複製，貼到 Claude 對話即可（本工具不會自動呼叫 API）。'); },
+      function () {
+        setStatus('潤稿提示詞已複製，貼到 Claude 對話即可（本工具不會自動呼叫 API）。');
+        showButtonFeedback(polishIntroBtn, '已複製');
+      },
       function () { setStatus('複製失敗，請手動選取文字複製。', true); }
     );
   });
@@ -860,7 +948,10 @@
       return (i + 1) + '. ' + a.title + '\n' + appendUtm(a.url);
     });
     copyTextToClipboard(lines.join('\n\n'),
-      function () { setStatus('已複製全部連結到剪貼簿。'); },
+      function () {
+        setStatus('已複製全部連結到剪貼簿。');
+        showButtonFeedback(copyLinksBtn, '已複製');
+      },
       function () { setStatus('複製失敗，請手動選取文字複製。', true); }
     );
   });
