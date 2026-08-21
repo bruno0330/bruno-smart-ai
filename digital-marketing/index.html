@@ -88,6 +88,14 @@
     margin-bottom: 28px;
   }
 
+  @media (max-width: 480px) {
+    header.masthead {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+  }
+
   header.masthead h1 {
     font-family: "Fraunces", "Noto Serif TC", serif;
     font-weight: 600;
@@ -742,11 +750,35 @@
     }
   }
 
+  var CATEGORY_ORDER = ["Banner 廣告", "文字廣告", "社群貼文", "電子報／紙本", "其他"];
+
+  function placementCategory(p) {
+    var m = p.medium;
+    if (m === "social") return "社群貼文";
+    if (m === "email" || m === "direct" || m === "dm") return "電子報／紙本";
+    if (m === "icon") return "其他";
+    if (m.indexOf("banner") !== -1) return "Banner 廣告";
+    return "文字廣告";
+  }
+
+  var placementsByCategory = {};
   PLACEMENTS.forEach(function (p, i) {
-    var o = document.createElement("option");
-    o.value = String(i);
-    o.textContent = p.label;
-    placementPickEl.appendChild(o);
+    var cat = placementCategory(p);
+    if (!placementsByCategory[cat]) placementsByCategory[cat] = [];
+    placementsByCategory[cat].push(i);
+  });
+
+  CATEGORY_ORDER.forEach(function (cat) {
+    if (!placementsByCategory[cat]) return;
+    var group = document.createElement("optgroup");
+    group.label = cat;
+    placementsByCategory[cat].forEach(function (i) {
+      var o = document.createElement("option");
+      o.value = String(i);
+      o.textContent = PLACEMENTS[i].label;
+      group.appendChild(o);
+    });
+    placementPickEl.appendChild(group);
   });
 
   placementPickEl.addEventListener("change", function () {
@@ -829,18 +861,30 @@
       ["無中文字元", noChinese]
     ];
 
+    var allOk = lower && noSpace && noSpecial && noChinese;
     checklistEl.innerHTML = "";
-    checks.forEach(function (c) {
-      var chip = document.createElement("span");
-      chip.className = "chip " + (c[1] ? "ok" : "bad");
-      var dot = document.createElement("span");
-      dot.className = "dot";
-      chip.appendChild(dot);
-      chip.appendChild(document.createTextNode(c[0]));
-      checklistEl.appendChild(chip);
-    });
+    if (allOk) {
+      var okChip = document.createElement("span");
+      okChip.className = "chip ok";
+      var okDot = document.createElement("span");
+      okDot.className = "dot";
+      okChip.appendChild(okDot);
+      okChip.appendChild(document.createTextNode("格式正確"));
+      checklistEl.appendChild(okChip);
+    } else {
+      checks.forEach(function (c) {
+        if (c[1]) return;
+        var chip = document.createElement("span");
+        chip.className = "chip bad";
+        var dot = document.createElement("span");
+        dot.className = "dot";
+        chip.appendChild(dot);
+        chip.appendChild(document.createTextNode(c[0]));
+        checklistEl.appendChild(chip);
+      });
+    }
 
-    return lower && noSpace && noSpecial && noChinese;
+    return allOk;
   }
 
   function stripUtmParams(url) {
@@ -1101,15 +1145,23 @@
   });
 
   var batchChecklistEl = $("batchChecklist");
-  PLACEMENTS.forEach(function (p, i) {
-    var label = document.createElement("label");
-    label.style.cssText = "display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;";
-    var cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.value = String(i);
-    label.appendChild(cb);
-    label.appendChild(document.createTextNode(p.label));
-    batchChecklistEl.appendChild(label);
+  CATEGORY_ORDER.forEach(function (cat) {
+    if (!placementsByCategory[cat]) return;
+    var header = document.createElement("div");
+    header.textContent = cat;
+    header.style.cssText = "font-size:11px; font-weight:600; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.05em; margin-top:10px;";
+    batchChecklistEl.appendChild(header);
+    placementsByCategory[cat].forEach(function (i) {
+      var p = PLACEMENTS[i];
+      var label = document.createElement("label");
+      label.style.cssText = "display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = String(i);
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(p.label));
+      batchChecklistEl.appendChild(label);
+    });
   });
 
   $("batchGenerateBtn").addEventListener("click", function () {
