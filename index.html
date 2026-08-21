@@ -148,10 +148,46 @@
     transition:all .22s ease; box-shadow:var(--shadow-lg);
   }
   .toast.show{opacity:1; transform:translate(-50%,0);}
+
+  .lock-screen{
+    position:fixed; inset:0; background:var(--bg); z-index:100;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .lock-box{
+    width:100%; max-width:320px; text-align:center;
+  }
+  .lock-logo{width:56px; height:56px; border-radius:14px; margin:0 auto 20px; box-shadow:var(--shadow-md); overflow:hidden;}
+  .lock-logo img{width:100%; height:100%; display:block;}
+  .lock-title{font-weight:600; font-size:17px; margin:0 0 6px;}
+  .lock-sub{font-size:13px; color:var(--text-2); margin:0 0 24px;}
+  .lock-input{
+    width:100%; height:44px; border-radius:var(--radius, 10px); border:1px solid var(--border);
+    background:var(--surface); color:var(--text); font-size:15px; text-align:center;
+    letter-spacing:0.1em; padding:0 12px; margin-bottom:12px;
+  }
+  .lock-input:focus{outline:none; border-color:var(--brand);}
+  .lock-btn{
+    width:100%; height:44px; border-radius:10px; border:none; cursor:pointer;
+    background:linear-gradient(90deg, var(--brand), var(--brand-glow)); color:#fff;
+    font-size:14px; font-weight:600;
+  }
+  .lock-error{font-size:12.5px; color:#e2534d; margin-top:12px; min-height:16px;}
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-logo"><img src="assets/logo-mark.svg" alt="Bruno Smart AI Ltd."></div>
+    <p class="lock-title">Bruno Smart AI Ltd.</p>
+    <p class="lock-sub">請輸入密碼繼續</p>
+    <input type="password" class="lock-input" id="lockInput" placeholder="密碼" autocomplete="off">
+    <button class="lock-btn" id="lockBtn">進入</button>
+    <p class="lock-error" id="lockError"></p>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
 
   <div class="topbar">
     <div class="brand">
@@ -311,6 +347,48 @@
     clearTimeout(window._toastTimer);
     window._toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 1800);
   }
+
+  (function(){
+    var PASSWORD_HASH = '530edbf1e0164c6e129d032145405c907c3946039f81a84f9eed08d279f26f18';
+    var STORAGE_KEY = 'bsa_unlocked';
+    var lockScreen = document.getElementById('lockScreen');
+    var app = document.getElementById('app');
+    var input = document.getElementById('lockInput');
+    var btn = document.getElementById('lockBtn');
+    var errEl = document.getElementById('lockError');
+
+    function unlock(){
+      lockScreen.style.display = 'none';
+      app.style.display = '';
+      try { localStorage.setItem(STORAGE_KEY, '1'); } catch(e){}
+    }
+
+    async function sha256Hex(text){
+      var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+      return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+    }
+
+    async function tryUnlock(){
+      var val = input.value;
+      if(!val){ errEl.textContent = '請先輸入密碼'; return; }
+      var hash = await sha256Hex(val);
+      if(hash === PASSWORD_HASH){
+        errEl.textContent = '';
+        unlock();
+      } else {
+        errEl.textContent = '密碼不正確';
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    try {
+      if(localStorage.getItem(STORAGE_KEY) === '1'){ unlock(); }
+    } catch(e){}
+
+    btn.addEventListener('click', tryUnlock);
+    input.addEventListener('keydown', function(e){ if(e.key === 'Enter') tryUnlock(); });
+  })();
 </script>
 </body>
 </html>
