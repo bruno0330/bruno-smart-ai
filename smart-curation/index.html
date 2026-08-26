@@ -111,7 +111,15 @@
 
   .gvm-edit-item{ border:1px solid #dde3ea; border-radius:4px; padding:12px; background:#fff; }
   .gvm-edit-item + .gvm-edit-item{ margin-top:10px; }
-  .gvm-edit-num{ font-size:11px; color:var(--rose); font-weight:700; margin-bottom:6px; }
+  .gvm-edit-head{ display:flex; flex-wrap:wrap; gap:6px 10px; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .gvm-edit-num{ font-size:11px; color:var(--rose); font-weight:700; }
+  .gvm-edit-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+  .gvm-btn-mini{ padding:3px 9px; font-size:11px; text-decoration:none; display:inline-block; }
+  .gvm-used-badge{
+    font-size:10px; font-weight:700; color:#b5432f; background:#fbe7e2;
+    padding:2px 7px; border-radius:999px; margin-left:8px; white-space:nowrap;
+  }
+  .gvm-img-hint{ font-size:11px; color:var(--text-soft); margin-top:6px; }
   .gvm-edit-item input, .gvm-edit-item textarea{
     width:100%; padding:7px 9px; border:1px solid #dde3ea; border-radius:3px;
     font-size:13px; font-family:inherit; margin-top:4px; color:var(--text);
@@ -120,6 +128,15 @@
   .gvm-edit-item label{ font-size:10.5px; color:var(--text-soft); }
   .gvm-edit-url{ font-size:11px; color:var(--navy-soft); margin-top:8px; word-break:break-all; }
   .gvm-edit-url a{ color:var(--navy-soft); }
+
+  .gvm-chip-block{ margin-top:12px; }
+  .gvm-chip-label{ font-size:11px; color:var(--text-soft); margin-bottom:6px; }
+  .gvm-chip-row{ display:flex; flex-wrap:wrap; gap:6px; }
+  .gvm-chip{
+    background:#fff; color:var(--navy); border:1px solid #ccd3dc; border-radius:999px;
+    padding:4px 12px; font-size:12px; cursor:pointer; font-family:inherit;
+  }
+  .gvm-chip:hover{ background:#dfe5ec; }
 
   .gvm-adv-toggle{
     background:none; border:none; color:var(--navy); font-size:12.5px; font-weight:700;
@@ -237,6 +254,14 @@
         </div>
         <div id="gvm-last-keyword" class="gvm-copy-hint" style="margin-top:8px"></div>
         <div id="gvm-status" class="gvm-status">資料庫載入中…</div>
+        <div id="gvm-hot-keywords" class="gvm-chip-block" style="display:none">
+          <div class="gvm-chip-label">🔥 熱門關鍵字（近半年館藏高頻主題）</div>
+          <div id="gvm-hot-keywords-list" class="gvm-chip-row"></div>
+        </div>
+        <div id="gvm-recent-keywords" class="gvm-chip-block" style="display:none">
+          <div class="gvm-chip-label">🕘 最近用過</div>
+          <div id="gvm-recent-keywords-list" class="gvm-chip-row"></div>
+        </div>
       </div>
 
       <div id="gvm-intro-panel" class="gvm-panel" style="display:none">
@@ -349,7 +374,11 @@
 
   var DATA_URL = 'data/curation_index.json';
   var ARTICLES = [];
-  var state = { keyword: '', intro: '', articles: [] };
+  var state = { keyword: '', intro: '', articles: [], yearLimit: 0 };
+  var hotKeywordsBlock = $('gvm-hot-keywords');
+  var hotKeywordsList = $('gvm-hot-keywords-list');
+  var recentKeywordsBlock = $('gvm-recent-keywords');
+  var recentKeywordsList = $('gvm-recent-keywords-list');
   var GLOBAL_FOCUS_CATEGORY = '全球焦點';
   var globalFocusCandidates = [];
   var globalFocusArticle = null;
@@ -584,16 +613,219 @@
     return String(s || '').replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
   }
 
+  function imgExtOf(url) {
+    var m = /\.(jpe?g|png|webp|gif)(?:[?#]|$)/i.exec(url || '');
+    return m ? '.' + m[1].toLowerCase() : '.jpg';
+  }
+
+  function loadJSON(key, fallback) {
+    try {
+      var v = JSON.parse(localStorage.getItem(key));
+      return v || fallback;
+    } catch (e) { return fallback; }
+  }
+  function saveJSON(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+  }
+
+  // 「近期用過」提醒：避免同仁在同一輪流行週期（抓兩週）內不小心重複推同一篇文章
+  var USED_HISTORY_KEY = 'gvm_used_articles_v1';
+  var USED_HISTORY_MAX = 300;
+  var DUP_REMINDER_DAYS = 14;
+
+  function recordUsedArticles(articleIds) {
+    var history = loadJSON(USED_HISTORY_KEY, []);
+    var byId = {};
+    history.forEach(function (h) { byId[h.i] = h; });
+    var today = formatToday('-');
+    articleIds.forEach(function (id) { if (id) byId[id] = { i: id, usedAt: today }; });
+    var merged = Object.keys(byId).map(function (k) { return byId[k]; });
+    merged.sort(function (a, b) { return a.usedAt < b.usedAt ? 1 : -1; });
+    if (merged.length > USED_HISTORY_MAX) merged = merged.slice(0, USED_HISTORY_MAX);
+    saveJSON(USED_HISTORY_KEY, merged);
+  }
+
+  function getRecentUse(articleId) {
+    if (!articleId) return null;
+    var history = loadJSON(USED_HISTORY_KEY, []);
+    var found = history.find(function (h) { return h.i === articleId; });
+    if (!found) return null;
+    var cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - DUP_REMINDER_DAYS);
+    if (new Date(found.usedAt) < cutoff) return null;
+    return found.usedAt;
+  }
+
+  // 最近搜尋過的關鍵字快選：本機記錄，方便每週重複策展同一批常用主題
+  var RECENT_KW_KEY = 'gvm_recent_keywords_v1';
+  var RECENT_KW_MAX = 8;
+
+  function recordRecentKeyword(kw) {
+    var list = loadJSON(RECENT_KW_KEY, []).filter(function (k) { return k !== kw; });
+    list.unshift(kw);
+    if (list.length > RECENT_KW_MAX) list = list.slice(0, RECENT_KW_MAX);
+    saveJSON(RECENT_KW_KEY, list);
+    renderRecentKeywords();
+  }
+
+  function renderRecentKeywords() {
+    var list = loadJSON(RECENT_KW_KEY, []);
+    if (!list.length) { recentKeywordsBlock.style.display = 'none'; return; }
+    recentKeywordsList.innerHTML = '';
+    list.forEach(function (kw) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'gvm-chip';
+      chip.textContent = kw;
+      chip.addEventListener('click', function () {
+        keywordInput.value = kw;
+        generate();
+      });
+      recentKeywordsList.appendChild(chip);
+    });
+    recentKeywordsBlock.style.display = 'block';
+  }
+
+  // 本地熱門關鍵字：不呼叫任何外部熱搜 API（沒有免費、支援跨網域讀取的公開資料源），
+  // 改用館藏近半年文章，統計既有主題同義詞表（SYNONYM_GROUPS）裡哪些主題篇數最多，
+  // 保證點下去一定搜得到文章。
+  var HOT_KEYWORDS_WINDOW_MONTHS = 6;
+  var HOT_KEYWORDS_MIN_COUNT = 3;
+  var HOT_KEYWORDS_TOP_N = 6;
+
+  function ymOf(a) { return yearOf(a) * 100 + monthOf(a); }
+  function shiftYm(ym, monthsBack) {
+    var y = Math.floor(ym / 100), m = ym % 100;
+    var total = y * 12 + (m - 1) - monthsBack;
+    var ny = Math.floor(total / 12), nm = (total % 12) + 1;
+    return ny * 100 + nm;
+  }
+
+  function computeHotKeywords() {
+    if (!ARTICLES.length) return [];
+    var maxYm = 0;
+    ARTICLES.forEach(function (a) { var ym = ymOf(a); if (ym > maxYm) maxYm = ym; });
+    if (!maxYm) return [];
+    var minYm = shiftYm(maxYm, HOT_KEYWORDS_WINDOW_MONTHS);
+    var pool = ARTICLES.filter(function (a) { var ym = ymOf(a); return ym >= minYm && ym <= maxYm; });
+    var ranked = SYNONYM_GROUPS.map(function (group) {
+      var termsLower = group.map(function (t) { return t.toLowerCase(); });
+      var count = 0;
+      pool.forEach(function (a) {
+        var text = ((a.t || '') + ' ' + (a.es || '')).toLowerCase();
+        if (termsLower.some(function (t) { return text.indexOf(t) !== -1; })) count++;
+      });
+      return { term: group[0], count: count };
+    });
+    ranked.sort(function (a, b) { return b.count - a.count; });
+    return ranked.filter(function (r) { return r.count >= HOT_KEYWORDS_MIN_COUNT; }).slice(0, HOT_KEYWORDS_TOP_N);
+  }
+
+  function renderHotKeywords() {
+    var top = computeHotKeywords();
+    if (!top.length) { hotKeywordsBlock.style.display = 'none'; return; }
+    hotKeywordsList.innerHTML = '';
+    top.forEach(function (item) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'gvm-chip';
+      chip.textContent = item.term;
+      chip.addEventListener('click', function () {
+        keywordInput.value = item.term;
+        generate();
+      });
+      hotKeywordsList.appendChild(chip);
+    });
+    hotKeywordsBlock.style.display = 'block';
+  }
+
+  function swapArticle(index) {
+    if (!state.articles[index]) return;
+    var terms = expandTerms(state.keyword);
+    var originalLower = state.keyword.trim().toLowerCase();
+    var pool = ARTICLES;
+    if (state.yearLimit) pool = pool.filter(function (a) { return yearOf(a) >= state.yearLimit; });
+    var usedIds = {};
+    state.articles.forEach(function (a) { usedIds[a.i] = true; });
+    var scored = pool
+      .map(function (a) { return { article: a, score: scoreArticle(a, terms, originalLower) }; })
+      .filter(function (x) { return x.score > 0 && !usedIds[x.article.i]; })
+      .sort(function (a, b) { return b.score - a.score; });
+    if (!scored.length) {
+      setStatus('沒有更多符合「' + state.keyword + '」且尚未使用的文章可更換了。', true);
+      return;
+    }
+    var next = scored[0].article;
+    var year = (next.y || '').split('/')[0];
+    ensureSummaries([year]).then(function () {
+      state.articles[index] = {
+        i: next.i, title: next.t, summary: cleanExcerpt(fullTextFor(next)),
+        url: next.url, y: next.y, n: next.n, img: next.img || ''
+      };
+      refreshAll();
+      setStatus('已更換第 ' + (index + 1) + ' 篇。');
+    });
+  }
+
   function renderEditList() {
     editListEl.innerHTML = '';
     state.articles.forEach(function (a, i) {
       var item = document.createElement('div');
       item.className = 'gvm-edit-item';
 
+      var head = document.createElement('div');
+      head.className = 'gvm-edit-head';
+
       var numDiv = document.createElement('div');
       numDiv.className = 'gvm-edit-num';
       numDiv.textContent = String(i + 1).padStart(2, '0') + '　' + formatSource(a);
-      item.appendChild(numDiv);
+      var recentUse = getRecentUse(a.i);
+      if (recentUse) {
+        var badge = document.createElement('span');
+        badge.className = 'gvm-used-badge';
+        badge.textContent = '近期用過・' + recentUse.slice(5).replace('-', '/');
+        numDiv.appendChild(badge);
+      }
+      head.appendChild(numDiv);
+
+      var actions = document.createElement('div');
+      actions.className = 'gvm-edit-actions';
+
+      var swapBtn = document.createElement('button');
+      swapBtn.type = 'button';
+      swapBtn.className = 'gvm-btn-outline gvm-btn-mini';
+      swapBtn.textContent = '換一篇';
+      swapBtn.dataset.action = 'swap';
+      swapBtn.dataset.i = i;
+      actions.appendChild(swapBtn);
+
+      var copyLinkBtn = document.createElement('button');
+      copyLinkBtn.type = 'button';
+      copyLinkBtn.className = 'gvm-btn-outline gvm-btn-mini';
+      copyLinkBtn.textContent = '複製連結';
+      copyLinkBtn.dataset.action = 'copy-link';
+      copyLinkBtn.dataset.i = i;
+      actions.appendChild(copyLinkBtn);
+
+      if (a.img) {
+        var imgBtn = document.createElement('a');
+        imgBtn.className = 'gvm-btn-outline gvm-btn-mini';
+        imgBtn.textContent = '開啟原圖';
+        imgBtn.href = a.img;
+        imgBtn.target = '_blank';
+        imgBtn.rel = 'noopener noreferrer';
+        imgBtn.download = String(i + 1).padStart(2, '0') + imgExtOf(a.img);
+        actions.appendChild(imgBtn);
+      }
+      head.appendChild(actions);
+      item.appendChild(head);
+
+      if (a.img) {
+        var imgHint = document.createElement('div');
+        imgHint.className = 'gvm-img-hint';
+        imgHint.textContent = '圖片會在新分頁開啟，右鍵「另存圖片」時建議命名：' + String(i + 1).padStart(2, '0') + imgExtOf(a.img);
+        item.appendChild(imgHint);
+      }
 
       var titleLabel = document.createElement('label');
       titleLabel.textContent = '標題';
@@ -769,7 +1001,7 @@
       introPanel.style.display = 'none';
       listPanel.style.display = 'none';
       utmPanel.style.display = 'none';
-      state = { keyword: '', intro: '', articles: [] };
+      state = { keyword: '', intro: '', articles: [], yearLimit: 0 };
       renderPreview();
       return;
     }
@@ -779,8 +1011,9 @@
     var years = Array.from(new Set(picked.map(function (a) { return (a.y || '').split('/')[0]; })));
     ensureSummaries(years).then(function () {
       state.keyword = keyword;
+      state.yearLimit = yearLimit;
       state.articles = picked.map(function (a) {
-        return { title: a.t, summary: cleanExcerpt(fullTextFor(a)), url: a.url, y: a.y, n: a.n, img: a.img || '' };
+        return { i: a.i, title: a.t, summary: cleanExcerpt(fullTextFor(a)), url: a.url, y: a.y, n: a.n, img: a.img || '' };
       });
       state.intro = buildIntro(keyword, picked);
 
@@ -790,6 +1023,7 @@
       listPanel.style.display = 'block';
       utmPanel.style.display = 'block';
       refreshAll();
+      recordRecentKeyword(keyword);
 
       lastKeywordEl.textContent = '上次搜尋：「' + keyword + '」・' + (yearLimit ? yearLimit + '年之後' : '不限年份') + '・' + count + '篇';
       setStatus('已找到 ' + picked.length + ' 篇真實文章（資料庫共 ' + ARTICLES.length + ' 篇有摘要文章）。');
@@ -886,7 +1120,7 @@
   });
 
   resetBtn.addEventListener('click', function () {
-    state = { keyword: '', intro: '', articles: [] };
+    state = { keyword: '', intro: '', articles: [], yearLimit: 0 };
     keywordInput.value = '';
     introEditEl.value = '';
     updateIntroCount();
@@ -914,6 +1148,25 @@
       if (countEl) countEl.textContent = e.target.value.length + ' 字';
     }
     renderPreview();
+  });
+
+  editListEl.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var i = parseInt(btn.dataset.i, 10);
+    var article = state.articles[i];
+    if (!article) return;
+    if (btn.dataset.action === 'swap') {
+      swapArticle(i);
+    } else if (btn.dataset.action === 'copy-link') {
+      copyTextToClipboard(appendUtm(article.url),
+        function () {
+          recordUsedArticles([article.i]);
+          showButtonFeedback(btn, '已複製');
+        },
+        function () { setStatus('複製失敗，請手動選取文字複製。', true); }
+      );
+    }
   });
 
   advToggle.addEventListener('click', function () {
@@ -954,6 +1207,7 @@
     });
     copyTextToClipboard(lines.join('\n\n'),
       function () {
+        recordUsedArticles(state.articles.map(function (a) { return a.i; }));
         setStatus('已複製全部連結到剪貼簿。');
         showButtonFeedback(copyLinksBtn, '已複製');
       },
@@ -1018,6 +1272,7 @@
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    recordUsedArticles(state.articles.map(function (a) { return a.i; }));
     setStatus('HTML 已下載，可直接開啟或轉發給同事。');
   });
 
@@ -1029,6 +1284,8 @@
       generateBtn.disabled = false;
       setStatus('資料庫共 ' + ARTICLES.length + ' 篇有摘要文章（1987–2026），可開始搜尋。');
       computeGlobalFocus();
+      renderHotKeywords();
+      renderRecentKeywords();
     } catch (e) {
       setStatus('資料庫載入失敗，請重新整理頁面', true);
       console.error(e);
