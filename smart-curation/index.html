@@ -119,6 +119,10 @@
     font-size:10px; font-weight:700; color:#b5432f; background:#fbe7e2;
     padding:2px 7px; border-radius:999px; margin-left:8px; white-space:nowrap;
   }
+  .gvm-related-badge{
+    font-size:10px; font-weight:700; color:var(--navy-soft); background:#e4e9f0;
+    padding:2px 7px; border-radius:999px; margin-left:8px; white-space:nowrap;
+  }
   .gvm-img-hint{ font-size:11px; color:var(--text-soft); margin-top:6px; }
   .gvm-edit-item input, .gvm-edit-item textarea{
     width:100%; padding:7px 9px; border:1px solid #dde3ea; border-radius:3px;
@@ -416,23 +420,103 @@
     ['綠能','再生能源','太陽能','風電']
   ];
 
+  function formatYearRange(minY, maxY) {
+    if (!minY || !maxY) return '';
+    return minY === maxY ? (minY + ' 年') : (minY + '～' + maxY + ' 年');
+  }
+
+  // 引言客製化用的小工具：從真實文章資料抽出可以直接引用的具體內容，
+  // 不是罐頭句套關鍵字——分類、標題、摘要片段都來自 state.articles 的真實欄位。
+  function introSnippet(text, maxLen) {
+    maxLen = maxLen || 32;
+    var s = (text || '').trim();
+    if (s.length <= maxLen) return s;
+    var cut = s.slice(0, maxLen);
+    // 盡量在完整的句子/子句邊界斷開，避免剛好切在原文的引號或詞中間
+    var lastPunct = Math.max(cut.lastIndexOf('。'), cut.lastIndexOf('，'), cut.lastIndexOf('、'), cut.lastIndexOf('！'), cut.lastIndexOf('？'));
+    if (lastPunct >= maxLen * 0.5) return cut.slice(0, lastPunct + 1);
+    return cut + '…';
+  }
+
+  // 引言範本把摘要片段包進「」引號時，如果片段本身已經是完整句子（結尾有標點），
+  // 就不要在引號外再補一個句號，避免變成「...。」。這種重複標點
+  function quoteEnding(snippet) {
+    return /[。！？…]$/.test(snippet) ? snippet : (snippet + '。');
+  }
+
+  function uniqueCategories(articles) {
+    var seen = {}, list = [];
+    articles.forEach(function (a) { if (a.s && !seen[a.s]) { seen[a.s] = true; list.push(a.s); } });
+    return list;
+  }
+
+  // 資料庫裡的分類欄位（s）是給系統比對用的標籤，直接印給讀者看會像報表。
+  // 這裡固定翻成一組自然語言說法——只翻譯既有的 16 種真實分類，不是編造內容；
+  // 遇到不在表列中的分類（理論上不會有，但保留保底）就照原文顯示。
+  var CATEGORY_PHRASES = {
+    '封面故事': '深度議題', '特別企畫': '專題企劃', '名家專欄': '名家觀點', '人文生活': '人文生活視角',
+    '時事熱線': '時事脈動', '產業綜合': '產業動態', '財經綜合': '財經趨勢', '全球焦點': '國際視野',
+    '兩岸新世紀': '兩岸情勢', '遠見調查': '第一手調查', '精采人物': '第一線人物故事', '編者的話': '編輯視角',
+    '台灣新希望': '台灣在地故事', '永續新主張': '永續倡議', '前瞻科技業': '前瞻科技', '文教新語': '文教觀察'
+  };
+  function categoryPhrase(cat) { return CATEGORY_PHRASES[cat] || cat; }
+
+  function formatCategoryList(categories) {
+    var phrases = categories.map(categoryPhrase);
+    if (!phrases.length) return '不同角度';
+    if (phrases.length === 1) return phrases[0];
+    if (phrases.length === 2) return phrases[0] + '與' + phrases[1];
+    return phrases.slice(0, -1).join('、') + '、' + phrases[phrases.length - 1];
+  }
+
+  // 文章自己的年月（來自 a.y，如 "2025/08"）轉成「2025年08月」，給引言裡引用時用，
+  // 跟卡片上顯示的期別格式一致。
+  function formatArticleDate(y) {
+    var parts = (y || '').split('/');
+    return parts[0] ? (parts[0] + '年' + (parts[1] ? parts[1] + '月' : '')) : '';
+  }
+
+  var INTRO_SIGNATURE = '\n\n——遠見線上讀智能編輯';
+
+  // 一般情境（精準命中且篇數 ≥ 2）用的輪替範本：以「智能編輯」第一人稱、對你直接說話，
+  // 開頭帶入今天的真實日期，並直接引用其中一篇（依日期排序最新的精準命中）的真實標題、
+  // 摘要片段與真實分類分佈，確保不同關鍵字、不同文章組合產生的引言真的不一樣。
   var INTRO_TEMPLATES = [
-    function (kw, count, minY, maxY) {
-      return '「' + kw + '」是近期不容忽視的重要議題。《遠見雜誌》深耕報導超過 40 年，這次特別從歷年典藏中精選出 ' + count +
-        ' 篇具代表性的深度好文（' + minY + '～' + maxY + ' 年），內容橫跨政策動向、產業觀察與第一線人物故事，' +
-        '希望能幫助你用最短時間掌握「' + kw + '」的來龍去脈與最新發展，歡迎點閱、分享給更多關心這個議題的朋友。';
+    function (kw, count, yearRange, categoryText, hook) {
+      return '你最近過得好嗎？這次想跟你聊聊「' + kw + '」——翻找遠見雜誌的檔案庫時，最先跳出來的是 ' +
+        formatArticleDate(hook.y) + ' 的一篇報導，裡頭寫著：「' + quoteEnding(introSnippet(hook.summary, 40)) + '」' +
+        '我另外挑了 ' + (count - 1) + ' 篇，從' + categoryText + '都有，希望能陪你把「' + kw + '」這件事看得更立體一些。' + INTRO_SIGNATURE;
     },
-    function (kw, count, minY, maxY) {
-      return '關於「' + kw + '」，遠見雜誌從創刊以來累積了不少第一手觀察與深度分析。這次特別從龐大的紙本典藏中挑出 ' + count +
-        ' 篇具代表性的報導（' + minY + '～' + maxY + ' 年），從不同時期、不同角度切入同一個主題，' +
-        '讓你一次讀懂脈絡與轉折，也看見遠見雜誌長期關注這個議題的軌跡。';
+    function (kw, count, yearRange, categoryText, hook) {
+      return '又到了整理「' + kw + '」的時候。這次翻遍典藏，最讓我停下來的是 ' + formatArticleDate(hook.y) +
+        ' 那篇——裡面提到：「' + quoteEnding(introSnippet(hook.summary, 40)) + '」加上另外 ' + (count - 1) + ' 篇，橫跨' +
+        categoryText + '，希望這幾篇報導能幫你把「' + kw + '」的脈絡串起來。' + INTRO_SIGNATURE;
     },
-    function (kw, count, minY, maxY) {
-      return '「' + kw + '」是近期熱門的討論話題，也是《遠見雜誌》長期關注的焦點之一。以下精選 ' + count +
-        ' 篇跨越 ' + minY + '～' + maxY + ' 年的真實報導，提供產業趨勢、政策解讀與第一線觀察等不同角度的深度解析，' +
-        '值得靜下心來收藏閱讀，也適合分享給正在關心這個議題的同事與朋友。';
+    function (kw, count, yearRange, categoryText, hook) {
+      return '你好。今天想和你分享「' + kw + '」這個題目——遠見雜誌在 ' + formatArticleDate(hook.y) +
+        ' 寫過：「' + introSnippet(hook.summary, 40) + '」，這句話我印象很深。這次一共挑了 ' + count + ' 篇，涵蓋' +
+        categoryText + '，希望能陪你多看懂「' + kw + '」一點。' + INTRO_SIGNATURE;
     }
   ];
+
+  // 精準命中恰好 1 篇時：不裝作有「不同時期、不同角度」，如實告知只有 1 篇，直接引用這篇
+  function buildSingleIntro(kw, yearRange, hook) {
+    return '你最近過得好嗎？這次想跟你聊聊「' + kw + '」——不過老實說，遠見雜誌典藏裡直接相關的真實報導只有 1 篇（' +
+      formatArticleDate(hook.y) + '）：「' + quoteEnding(introSnippet(hook.summary, 50)) + '」篇數不多，但這確實是遠見對「' + kw +
+      '」的第一手記錄，還是想讓你看看。' + INTRO_SIGNATURE;
+  }
+
+  // 精準命中篇數不足、補了同分類延伸閱讀時：把組成講清楚，並引用精準命中那篇的真實標題，
+  // 不要讓讀者以為全部都是精準命中
+  function buildFallbackIntro(kw, exactArticles, exactYearRange, relatedCount, category) {
+    var hook = exactArticles[0];
+    var exactPart = exactArticles.length === 1
+      ? ('1 篇（' + formatArticleDate(hook.y) + '）：「' + introSnippet(hook.summary, 40) + '」')
+      : (exactArticles.length + ' 篇（' + exactYearRange + '），包含〈' + hook.title + '〉等');
+    return '你最近過得好嗎？這次想跟你聊聊「' + kw + '」——翻找檔案庫後，直接相關的真實報導找到 ' + exactPart +
+      '，篇數還沒到你設定的數量，所以我另外從「' + categoryPhrase(category) + '」這個類別裡，挑了 ' + relatedCount +
+      ' 篇比較新的報導補上，內容同樣真實，但嚴格來說不是「' + kw + '」的直接報導，下方文章清單已經幫你標示出來，用之前留意一下。' + INTRO_SIGNATURE;
+  }
   var introTemplateIdx = 0;
 
   function expandTerms(keyword) {
@@ -507,9 +591,28 @@
     return parseInt((article.y || '').split('/')[1], 10) || 0;
   }
 
+  // 找不到足夠篇數時的延伸閱讀類別：從已精準命中的文章裡票選最多人所屬的分類（s 欄位，
+  // 例如「財經綜合」「國際」），不是憑空亂配。同一分類底下取最新的真實文章補滿篇數，
+  // 不虛構、不硬塞不相關內容——只是誠實標示「這篇不是精準命中，是同分類延伸閱讀」。
+  function pickRelatedArticles(exactPicked, pool, needed, excludeIds) {
+    if (needed <= 0 || !exactPicked.length) return [];
+    var categoryVotes = {};
+    exactPicked.forEach(function (a) { if (a.s) categoryVotes[a.s] = (categoryVotes[a.s] || 0) + 1; });
+    var topCategory = Object.keys(categoryVotes).sort(function (x, y) { return categoryVotes[y] - categoryVotes[x]; })[0];
+    if (!topCategory) return [];
+    return pool
+      .filter(function (a) { return a.s === topCategory && !excludeIds[a.i]; })
+      .sort(function (a, b) {
+        var ya = yearOf(a), yb = yearOf(b);
+        if (ya !== yb) return yb - ya;
+        return monthOf(b) - monthOf(a);
+      })
+      .slice(0, needed);
+  }
+
   function searchArticles(keyword, count, yearLimit) {
     var terms = expandTerms(keyword);
-    if (!terms.length) return [];
+    if (!terms.length) return { picked: [], exactCount: 0 };
     var originalLower = keyword.trim().toLowerCase();
 
     var pool = ARTICLES;
@@ -536,20 +639,42 @@
         picked.push(item.article);
       });
     }
-    return picked.slice().sort(function (a, b) {
+
+    var exactIds = {};
+    picked.forEach(function (a) { exactIds[a.i] = true; });
+    if (picked.length > 0 && picked.length < count) {
+      var related = pickRelatedArticles(picked, pool, count - picked.length, exactIds);
+      picked = picked.concat(related);
+    }
+
+    picked = picked.slice().sort(function (a, b) {
       var ya = yearOf(a), yb = yearOf(b);
       if (ya !== yb) return yb - ya;
       return monthOf(b) - monthOf(a);
     });
+    return { picked: picked, exactIds: exactIds };
   }
 
   function buildIntro(keyword, articles) {
-    var years = articles.map(yearOf).filter(function (y) { return y > 0; });
-    var minY = years.length ? Math.min.apply(null, years) : '';
-    var maxY = years.length ? Math.max.apply(null, years) : '';
+    var exactArticles = articles.filter(function (a) { return a.matched; });
+    var relatedArticles = articles.filter(function (a) { return !a.matched; });
+    var exactYears = exactArticles.map(yearOf).filter(function (y) { return y > 0; });
+    var exactMinY = exactYears.length ? Math.min.apply(null, exactYears) : '';
+    var exactMaxY = exactYears.length ? Math.max.apply(null, exactYears) : '';
+    var exactYearRange = formatYearRange(exactMinY, exactMaxY);
+
+    if (relatedArticles.length > 0) {
+      var category = relatedArticles[0].s || '相關主題';
+      return buildFallbackIntro(keyword, exactArticles, exactYearRange, relatedArticles.length, category);
+    }
+    if (exactArticles.length === 1) {
+      return buildSingleIntro(keyword, exactYearRange, exactArticles[0]);
+    }
+    var categoryText = formatCategoryList(uniqueCategories(exactArticles));
+    var hook = exactArticles[0];
     var tpl = INTRO_TEMPLATES[introTemplateIdx % INTRO_TEMPLATES.length];
     introTemplateIdx++;
-    return tpl(keyword, articles.length, minY, maxY);
+    return tpl(keyword, exactArticles.length, exactYearRange, categoryText, hook);
   }
 
   (function populateYears() {
@@ -760,7 +885,7 @@
     ensureSummaries([year]).then(function () {
       state.articles[index] = {
         i: next.i, title: next.t, summary: cleanExcerpt(fullTextFor(next)),
-        url: next.url, y: next.y, n: next.n, img: next.img || ''
+        url: next.url, y: next.y, n: next.n, img: next.img || '', s: next.s || '', matched: true
       };
       refreshAll();
       setStatus('已更換第 ' + (index + 1) + ' 篇。');
@@ -779,6 +904,12 @@
       var numDiv = document.createElement('div');
       numDiv.className = 'gvm-edit-num';
       numDiv.textContent = String(i + 1).padStart(2, '0') + '　' + formatSource(a);
+      if (a.matched === false) {
+        var relatedBadge = document.createElement('span');
+        relatedBadge.className = 'gvm-related-badge';
+        relatedBadge.textContent = '延伸閱讀・非精準命中';
+        numDiv.appendChild(relatedBadge);
+      }
       var recentUse = getRecentUse(a.i);
       if (recentUse) {
         var badge = document.createElement('span');
@@ -995,7 +1126,9 @@
     var count = parseInt(countSelect.value, 10);
     var yearLimit = yearSelect.value ? parseInt(yearSelect.value, 10) : 0;
 
-    var picked = searchArticles(keyword, count, yearLimit);
+    var result = searchArticles(keyword, count, yearLimit);
+    var picked = result.picked;
+    var exactIds = result.exactIds;
     if (!picked.length) {
       setStatus('找不到與「' + keyword + '」相關的真實文章，換個關鍵字試試？', true);
       introPanel.style.display = 'none';
@@ -1013,9 +1146,12 @@
       state.keyword = keyword;
       state.yearLimit = yearLimit;
       state.articles = picked.map(function (a) {
-        return { i: a.i, title: a.t, summary: cleanExcerpt(fullTextFor(a)), url: a.url, y: a.y, n: a.n, img: a.img || '' };
+        return {
+          i: a.i, title: a.t, summary: cleanExcerpt(fullTextFor(a)), url: a.url, y: a.y, n: a.n,
+          img: a.img || '', s: a.s || '', matched: !!exactIds[a.i]
+        };
       });
-      state.intro = buildIntro(keyword, picked);
+      state.intro = buildIntro(keyword, state.articles);
 
       introEditEl.value = state.intro;
       updateIntroCount();
@@ -1025,8 +1161,12 @@
       refreshAll();
       recordRecentKeyword(keyword);
 
+      var exactCount = state.articles.filter(function (a) { return a.matched; }).length;
+      var relatedCount = state.articles.length - exactCount;
       lastKeywordEl.textContent = '上次搜尋：「' + keyword + '」・' + (yearLimit ? yearLimit + '年之後' : '不限年份') + '・' + count + '篇';
-      setStatus('已找到 ' + picked.length + ' 篇真實文章（資料庫共 ' + ARTICLES.length + ' 篇有摘要文章）。');
+      setStatus(relatedCount > 0
+        ? ('已找到 ' + exactCount + ' 篇精準符合「' + keyword + '」的文章，另補上 ' + relatedCount + ' 篇同分類延伸閱讀湊到 ' + picked.length + ' 篇（資料庫共 ' + ARTICLES.length + ' 篇有摘要文章）。')
+        : ('已找到 ' + picked.length + ' 篇真實文章（資料庫共 ' + ARTICLES.length + ' 篇有摘要文章）。'));
       generateBtn.disabled = false;
       showScrollHint();
     });
@@ -1100,7 +1240,7 @@
 
   regenIntroBtn.addEventListener('click', function () {
     if (!state.articles.length) return;
-    state.intro = buildIntro(state.keyword, state.articles.map(function (a) { return { y: a.y }; }));
+    state.intro = buildIntro(state.keyword, state.articles);
     introEditEl.value = state.intro;
     updateIntroCount();
     renderPreview();

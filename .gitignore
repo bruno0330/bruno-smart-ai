@@ -6,3 +6,4 @@ scripts/.backfill_progress.json
 scripts/.backfill_errors.json
 scripts/.image_backfill_progress.json
 scripts/.monthly_scrape_summary.txt
+.DS_Store
