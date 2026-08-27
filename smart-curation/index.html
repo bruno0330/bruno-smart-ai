@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能策展部｜遠見線上讀</title>
+<title>遠見智能策展部</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,10 +14,20 @@
     --cyan-1:#38bdf8; --cyan-2:#0284c7;
     --panel-bg:#eef1f5; --paper:#fafbfc; --line:#dde3ea;
     --text:#2a2f36; --text-soft:#6b7280;
+    --esg:#00a153; --esg-deep:#00733b; --esg-soft:#4a8a6a; --esg-tint:#eafaf1; --esg-line:#b3e6cc;
+    /* 「資料庫切換」用：--accent 系列預設＝遠見線上讀（navy），body.source-esg 會整組換成 ESG 綠。
+       其他既有規則都改引用 --accent／--accent-deep／--accent-soft，不用另外幫每個規則寫兩份。 */
+    --accent:var(--navy); --accent-deep:var(--navy-deep); --accent-soft:var(--navy-soft);
+    --hover-tint:#dfe5ec; --field-border:#ccd3dc; --badge-bg:#e4e9f0;
+  }
+  body.source-esg{
+    --accent:var(--esg); --accent-deep:var(--esg-deep); --accent-soft:var(--esg-soft);
+    --panel-bg:var(--esg-tint); --line:var(--esg-line);
+    --hover-tint:#d6f0e2; --field-border:var(--esg-line); --badge-bg:#d6f0e2;
   }
   *{ box-sizing:border-box; }
-  body{ margin:0; background:#fdfcfb; color:var(--text); font-family:"Noto Sans TC",sans-serif; }
-  .topbar{ height:4px; background:linear-gradient(90deg,var(--cyan-1),var(--cyan-2)); }
+  body{ margin:0; background:#fdfcfb; color:var(--text); font-family:"Noto Sans TC",sans-serif; transition:background .2s ease; }
+  .topbar{ height:4px; background:var(--accent); transition:background .2s ease; }
   .page-header{
     max-width:1240px; margin:0 auto; padding:16px 24px 0;
     display:flex; align-items:center; justify-content:space-between;
@@ -38,7 +48,36 @@
     font-family:"Noto Serif TC",serif; font-weight:900; font-size:26px;
     color:var(--navy-deep); margin:0 0 6px; letter-spacing:.03em;
   }
-  .gvm-masthead-sub{ font-size:12.5px; color:var(--text-soft); }
+  .gvm-masthead-sub{ font-size:12.5px; color:var(--text-soft); margin-bottom:20px; }
+
+  .gvm-source-switcher{ display:flex; gap:8px; justify-content:center; margin-bottom:12px; }
+  .gvm-source-btn{
+    padding:10px 24px; border-radius:999px; font-size:13.5px; font-weight:700;
+    border:1.5px solid var(--line); background:#fff; color:var(--text-soft);
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-family:inherit;
+    transition:background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .08s ease;
+  }
+  .gvm-source-btn:hover:not(.active){ border-color:var(--accent-soft); color:var(--accent); background:#f6f7f9; }
+  .gvm-source-btn:active{ transform:scale(.96); }
+  .gvm-source-btn.active{ background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 6px 16px rgba(0,0,0,.15); }
+  .gvm-source-btn .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.6; }
+  .gvm-source-caption{ font-size:11.5px; color:var(--text-soft); }
+
+  .gvm-draft-banner{
+    display:none; max-width:1240px; margin:0 auto 18px; padding:14px 18px;
+    background:#fff8e6; border:1px solid #f0d9a0; border-radius:6px;
+    align-items:center; gap:12px; flex-wrap:wrap; font-size:13px; color:#6b5320;
+  }
+  .gvm-draft-banner.show{ display:flex; }
+  .gvm-draft-banner .grow{ flex:1 1 260px; }
+  .gvm-draft-banner b{ font-weight:700; }
+  .gvm-draft-btn{
+    padding:7px 15px; border-radius:3px; font-size:12.5px; font-weight:700;
+    cursor:pointer; font-family:inherit; border:1px solid #d8b25f; background:#fff; color:#6b5320;
+  }
+  .gvm-draft-btn:hover{ background:#fdf1d6; }
+  .gvm-draft-btn.primary{ background:#b98c2a; border-color:#b98c2a; color:#fff; }
+  .gvm-draft-btn.primary:hover{ background:#a37a20; }
 
   .gvm-layout{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:22px; align-items:start; }
   @media (max-width:900px){ .gvm-layout{ grid-template-columns:1fr; } }
@@ -46,7 +85,7 @@
   .gvm-panel{ background:var(--panel-bg); border-radius:6px; padding:20px; }
   .gvm-panel + .gvm-panel{ margin-top:18px; }
   .gvm-panel-label{
-    font-size:11px; letter-spacing:.2em; color:var(--navy); text-transform:uppercase;
+    font-size:11px; letter-spacing:.2em; color:var(--accent); text-transform:uppercase;
     font-weight:700; margin-bottom:12px;
   }
 
@@ -54,26 +93,26 @@
   .gvm-field{ display:flex; flex-direction:column; gap:4px; }
   .gvm-field label{ font-size:11px; color:var(--text-soft); }
   .gvm-field input, .gvm-field select, #gvm-focus-year{
-    padding:8px 10px; border:1px solid #ccd3dc; border-radius:3px; font-size:13.5px;
+    padding:8px 10px; border:1px solid var(--field-border); border-radius:3px; font-size:13.5px;
     font-family:inherit; color:var(--text); background:#fff;
   }
-  .gvm-field input:focus, .gvm-field select:focus{ outline:none; border-color:var(--navy); }
+  .gvm-field input:focus, .gvm-field select:focus{ outline:none; border-color:var(--accent); }
   .gvm-keyword-field{ flex:1 1 160px; }
 
   .gvm-btn{
-    background:var(--navy); color:#fff; border:none; padding:9px 20px; border-radius:3px;
+    background:var(--accent); color:#fff; border:none; padding:9px 20px; border-radius:3px;
     font-size:13.5px; font-weight:700; cursor:pointer; align-self:flex-end;
   }
-  .gvm-btn:hover:not(:disabled){ background:var(--navy-deep); }
+  .gvm-btn:hover:not(:disabled){ background:var(--accent-deep); }
   .gvm-btn:disabled{ opacity:.5; cursor:not-allowed; }
 
   .gvm-btn-outline{
     position:relative;
-    background:transparent; color:var(--navy); border:1px solid var(--navy-soft);
+    background:transparent; color:var(--accent); border:1px solid var(--accent-soft);
     padding:6px 13px; border-radius:3px; font-size:12px; cursor:pointer;
     white-space:nowrap;
   }
-  .gvm-btn-outline:hover:not(:disabled){ background:#dfe5ec; }
+  .gvm-btn-outline:hover:not(:disabled){ background:var(--hover-tint); }
   .gvm-btn-outline:disabled{ opacity:.5; cursor:not-allowed; }
 
   .gvm-status{ font-size:12.5px; color:var(--text-soft); margin-top:12px; min-height:16px; }
@@ -82,7 +121,7 @@
 
   .gvm-btn-feedback{
     position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%);
-    white-space:nowrap; font-size:11px; font-weight:600; color:#fff; background:var(--navy);
+    white-space:nowrap; font-size:11px; font-weight:600; color:#fff; background:var(--accent);
     padding:4px 9px; border-radius:5px; opacity:0; pointer-events:none;
     transition:opacity .15s ease; z-index:5;
   }
@@ -90,7 +129,7 @@
 
   .gvm-scroll-hint{
     position:fixed; left:50%; bottom:20px; transform:translateX(-50%) translateY(0);
-    background:var(--navy); color:#fff; font-size:13px; font-weight:600;
+    background:var(--accent); color:#fff; font-size:13px; font-weight:600;
     padding:10px 18px; border-radius:999px; box-shadow:0 6px 20px rgba(0,0,0,.25);
     display:none; align-items:center; gap:6px; z-index:20; cursor:pointer; border:none;
     opacity:1; transition:opacity .25s ease, transform .25s ease;
@@ -103,13 +142,13 @@
 
   .gvm-intro-head{ display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; margin-bottom:8px; }
   .gvm-intro-edit{
-    width:100%; min-height:130px; padding:10px 12px; border:1px solid #ccd3dc; border-radius:4px;
+    width:100%; min-height:130px; padding:10px 12px; border:1px solid var(--field-border); border-radius:4px;
     font-family:"Noto Sans TC",sans-serif; font-size:13.5px; line-height:1.8;
     resize:vertical; background:#fff; color:var(--text);
   }
-  .gvm-intro-edit:focus{ outline:none; border-color:var(--navy); }
+  .gvm-intro-edit:focus{ outline:none; border-color:var(--accent); }
 
-  .gvm-edit-item{ border:1px solid #dde3ea; border-radius:4px; padding:12px; background:#fff; }
+  .gvm-edit-item{ border:1px solid var(--line); border-radius:4px; padding:12px; background:#fff; }
   .gvm-edit-item + .gvm-edit-item{ margin-top:10px; }
   .gvm-edit-head{ display:flex; flex-wrap:wrap; gap:6px 10px; justify-content:space-between; align-items:center; margin-bottom:6px; }
   .gvm-edit-num{ font-size:11px; color:var(--rose); font-weight:700; }
@@ -120,30 +159,30 @@
     padding:2px 7px; border-radius:999px; margin-left:8px; white-space:nowrap;
   }
   .gvm-related-badge{
-    font-size:10px; font-weight:700; color:var(--navy-soft); background:#e4e9f0;
+    font-size:10px; font-weight:700; color:var(--accent-soft); background:var(--badge-bg);
     padding:2px 7px; border-radius:999px; margin-left:8px; white-space:nowrap;
   }
   .gvm-img-hint{ font-size:11px; color:var(--text-soft); margin-top:6px; }
   .gvm-edit-item input, .gvm-edit-item textarea{
-    width:100%; padding:7px 9px; border:1px solid #dde3ea; border-radius:3px;
+    width:100%; padding:7px 9px; border:1px solid var(--line); border-radius:3px;
     font-size:13px; font-family:inherit; margin-top:4px; color:var(--text);
   }
   .gvm-edit-item textarea{ min-height:70px; resize:vertical; line-height:1.6; }
   .gvm-edit-item label{ font-size:10.5px; color:var(--text-soft); }
-  .gvm-edit-url{ font-size:11px; color:var(--navy-soft); margin-top:8px; word-break:break-all; }
-  .gvm-edit-url a{ color:var(--navy-soft); }
+  .gvm-edit-url{ font-size:11px; color:var(--accent-soft); margin-top:8px; word-break:break-all; }
+  .gvm-edit-url a{ color:var(--accent-soft); }
 
   .gvm-chip-block{ margin-top:12px; }
   .gvm-chip-label{ font-size:11px; color:var(--text-soft); margin-bottom:6px; }
   .gvm-chip-row{ display:flex; flex-wrap:wrap; gap:6px; }
   .gvm-chip{
-    background:#fff; color:var(--navy); border:1px solid #ccd3dc; border-radius:999px;
+    background:#fff; color:var(--accent); border:1px solid var(--field-border); border-radius:999px;
     padding:4px 12px; font-size:12px; cursor:pointer; font-family:inherit;
   }
-  .gvm-chip:hover{ background:#dfe5ec; }
+  .gvm-chip:hover{ background:var(--hover-tint); }
 
   .gvm-adv-toggle{
-    background:none; border:none; color:var(--navy); font-size:12.5px; font-weight:700;
+    background:none; border:none; color:var(--accent); font-size:12.5px; font-weight:700;
     cursor:pointer; padding:6px 0; display:flex; align-items:center; gap:6px;
   }
   .gvm-adv-body{ display:none; margin-top:12px; }
@@ -166,9 +205,9 @@
 
   .gvm-pv-masthead{ text-align:center; margin-bottom:26px; }
   .gvm-pv-eyebrow{ font-size:10px; letter-spacing:.3em; color:var(--rose); text-transform:uppercase; font-weight:700; margin-bottom:6px; }
-  .gvm-pv-title{ font-family:"Noto Serif TC",serif; font-weight:900; font-size:22px; color:var(--navy-deep); margin:0 0 6px; }
+  .gvm-pv-title{ font-family:"Noto Serif TC",serif; font-weight:900; font-size:22px; color:var(--accent-deep); margin:0 0 6px; }
   .gvm-pv-sub{ font-size:11.5px; color:var(--text-soft); }
-  .gvm-pv-date{ font-size:11px; color:var(--navy-soft); font-weight:700; letter-spacing:.05em; margin-top:8px; }
+  .gvm-pv-date{ font-size:11px; color:var(--accent-soft); font-weight:700; letter-spacing:.05em; margin-top:8px; }
   .gvm-pv-rule{ width:40px; height:2px; background:var(--rose); margin:14px auto 0; }
 
   .gvm-pv-section-divider{ display:flex; align-items:center; gap:12px; margin:32px 0 22px; }
@@ -187,24 +226,24 @@
   .gvm-pv-num{ font-family:"Noto Serif TC",serif; font-weight:700; font-size:28px; color:var(--rose); line-height:1; text-align:left; }
   .gvm-pv-thumb{ width:76px; height:76px; border-radius:6px; object-fit:cover; background:var(--panel-bg); }
   .gvm-pv-body{ flex:1; min-width:0; }
-  .gvm-pv-source{ font-size:10.5px; color:var(--navy-soft); font-weight:700; letter-spacing:.04em; margin-bottom:5px; }
-  .gvm-pv-item-title{ font-family:"Noto Serif TC",serif; font-size:15px; font-weight:700; color:var(--navy-deep); margin:0 0 6px; line-height:1.5; }
+  .gvm-pv-source{ font-size:10.5px; color:var(--accent-soft); font-weight:700; letter-spacing:.04em; margin-bottom:5px; }
+  .gvm-pv-item-title{ font-family:"Noto Serif TC",serif; font-size:15px; font-weight:700; color:var(--accent-deep); margin:0 0 6px; line-height:1.5; }
   .gvm-pv-summary{ font-size:12.5px; line-height:1.7; color:var(--text); margin-bottom:8px; }
-  .gvm-pv-link{ font-size:11.5px; color:var(--navy); text-decoration:none; font-weight:700; border-bottom:1px solid var(--navy-soft); padding-bottom:1px; }
+  .gvm-pv-link{ font-size:11.5px; color:var(--accent); text-decoration:none; font-weight:700; border-bottom:1px solid var(--accent-soft); padding-bottom:1px; }
   .gvm-pv-link:hover{ color:var(--rose); border-color:var(--rose); }
 
   .gvm-footnote{ text-align:center; font-size:11px; color:var(--text-soft); margin-top:30px; padding-top:18px; border-top:1px solid var(--line); line-height:1.7; }
 
-  .gvm-focus-label{ font-size:11px; letter-spacing:.1em; color:var(--navy-soft); text-transform:uppercase; font-weight:700; margin-bottom:8px; }
+  .gvm-focus-label{ font-size:11px; letter-spacing:.1em; color:var(--accent-soft); text-transform:uppercase; font-weight:700; margin-bottom:8px; }
   .gvm-focus-text{ font-size:13px; line-height:1.8; color:var(--text); }
   .gvm-focus-source{ font-size:11px; color:var(--text-soft); margin-top:8px; }
-  .gvm-focus-source a{ color:var(--navy-soft); }
+  .gvm-focus-source a{ color:var(--accent-soft); }
 
   .gvm-pv-focus{ margin:0 0 22px; }
-  .gvm-pv-focus-label{ font-size:11px; letter-spacing:.15em; color:var(--navy-soft); text-transform:uppercase; font-weight:700; margin-bottom:8px; }
+  .gvm-pv-focus-label{ font-size:11px; letter-spacing:.15em; color:var(--accent-soft); text-transform:uppercase; font-weight:700; margin-bottom:8px; }
   .gvm-pv-focus-text{ font-family:"Noto Serif TC",serif; font-size:15px; font-weight:600; line-height:1.85; color:var(--text); }
   .gvm-pv-focus-source{ font-size:11px; color:var(--text-soft); margin-top:10px; }
-  .gvm-pv-focus-source a{ color:var(--navy-soft); text-decoration:none; }
+  .gvm-pv-focus-source a{ color:var(--accent-soft); text-decoration:none; }
   .gvm-pv-focus-source a:hover{ color:var(--rose); }
 
   @media (max-width:900px){
@@ -226,9 +265,24 @@
 
 <div id="gvm-root">
   <div class="gvm-masthead">
-    <div class="gvm-masthead-eyebrow">GVM WEEKLY CURATION</div>
-    <div class="gvm-masthead-title">遠見線上讀</div>
-    <div class="gvm-masthead-sub">每週智能策展・僅收錄遠見雜誌紙本典藏文章・本地資料庫版（零 API 呼叫）</div>
+    <div class="gvm-masthead-eyebrow">GVM INTELLIGENT CURATION</div>
+    <div class="gvm-masthead-title">遠見智能策展部</div>
+    <div class="gvm-masthead-sub">選擇要策展的資料庫，開始搜尋真實文章、生成推播內容</div>
+    <div class="gvm-source-switcher">
+      <button type="button" class="gvm-source-btn" id="gvm-source-gvm" data-source="gvm">
+        <span class="dot"></span>遠見線上讀
+      </button>
+      <button type="button" class="gvm-source-btn" id="gvm-source-esg" data-source="esg">
+        <span class="dot"></span>ESG遠見共好圈
+      </button>
+    </div>
+    <div class="gvm-source-caption" id="gvm-source-caption"></div>
+  </div>
+
+  <div class="gvm-draft-banner" id="gvm-draft-banner">
+    <span class="grow" id="gvm-draft-text"></span>
+    <button type="button" class="gvm-draft-btn primary" id="gvm-draft-restore">繼續上次的編輯</button>
+    <button type="button" class="gvm-draft-btn" id="gvm-draft-discard">重新開始</button>
   </div>
 
   <div class="gvm-layout">
@@ -287,7 +341,7 @@
 
       <div class="gvm-panel">
         <div class="gvm-intro-head">
-          <div class="gvm-panel-label" style="margin:0">4・國際焦點（自動帶入，遠見雜誌真實報導）</div>
+          <div class="gvm-panel-label" style="margin:0" id="gvm-focus-panel-label">4・國際焦點（自動帶入，真實報導）</div>
           <div style="display:flex; gap:8px;">
             <select id="gvm-focus-year"></select>
             <button id="gvm-focus-cycle" class="gvm-btn-outline">換一篇</button>
@@ -376,20 +430,52 @@
   var utmDateInput = $('gvm-utm-date');
   var utmFromInput = $('gvm-utm-from');
 
-  var DATA_URL = 'data/curation_index.json';
+  // 資料庫切換：兩組來源共用同一套搜尋/比對/介面邏輯，差異只在資料檔案位置、
+  // 「國際焦點」對應的分類、關鍵字輸入框的提示文字。切換來源時重載 ARTICLES、
+  // 清掉全文快取、重算熱門關鍵字與國際焦點，不用重新整理頁面。
+  var DATA_SOURCES = {
+    gvm: {
+      label: '遠見線上讀', dataUrl: 'data/curation_index.json', summariesDir: 'data/summaries/',
+      focusCategory: '全球焦點', keywordPlaceholder: '例如：AI、淨零、高齡化', yearRangeLabel: '1987–2026',
+      previewEyebrow: 'GVM WEEKLY CURATION', previewSub: '每週智能策展・僅收錄遠見雜誌紙本典藏文章', domain: 'gvm.com.tw',
+      utmCampaign: 'gvm_curation',
+      exportPalette: {
+        accent: '#16325c', deep: '#0d2038', soft: '#4a6483',
+        decor: '#a9746e', decorLight: '#d9b8a9', line: '#dde3ea', thumbBg: '#eef1f5'
+      }
+    },
+    esg: {
+      label: 'ESG遠見共好圈', dataUrl: 'data/esg_curation_index.json', summariesDir: 'data/esg_summaries/',
+      focusCategory: '全球趨勢', keywordPlaceholder: '例如：淨零、碳權、循環經濟', yearRangeLabel: '2005–2026',
+      previewEyebrow: 'ESG DAILY CURATION', previewSub: '每日智能策展・僅收錄ESG遠見共好圈真實報導', domain: 'esg.gvm.com.tw',
+      utmCampaign: 'esg_curation',
+      exportPalette: {
+        accent: '#00a153', deep: '#00733b', soft: '#4a8a6a',
+        decor: '#00a153', decorLight: '#b3e6cc', line: '#d6f0e2', thumbBg: '#eafaf1'
+      }
+    }
+  };
+  var currentSource = 'gvm';
+  function sourceConfig() { return DATA_SOURCES[currentSource]; }
+
   var ARTICLES = [];
   var state = { keyword: '', intro: '', articles: [], yearLimit: 0 };
   var hotKeywordsBlock = $('gvm-hot-keywords');
   var hotKeywordsList = $('gvm-hot-keywords-list');
   var recentKeywordsBlock = $('gvm-recent-keywords');
   var recentKeywordsList = $('gvm-recent-keywords-list');
-  var GLOBAL_FOCUS_CATEGORY = '全球焦點';
   var globalFocusCandidates = [];
   var globalFocusArticle = null;
   var focusYearSelect = $('gvm-focus-year');
+  var sourceGvmBtn = $('gvm-source-gvm');
+  var sourceEsgBtn = $('gvm-source-esg');
+  var sourceCaptionEl = $('gvm-source-caption');
+  var focusPanelLabelEl = $('gvm-focus-panel-label');
 
   // 同義詞擴充表：key 為代表詞，陣列為同組所有詞。要擴充涵蓋主題直接在這裡加陣列即可。
-  var SYNONYM_GROUPS = [
+  // 兩個資料庫各有一份：雜誌本誌涵蓋各行各業，ESG 共好圈則集中在永續議題，
+  // 詞彙密度差很多（例如「碳權/碳費/碳交易」在本誌很少見、在 ESG 是主力題目）。
+  var SYNONYM_GROUPS_GVM = [
     ['AI','人工智慧','智能','生成式AI','ChatGPT'],
     ['淨零','碳中和','減碳','溫室氣體','淨零排放'],
     ['ESG','永續','企業永續','永續發展'],
@@ -420,6 +506,34 @@
     ['綠能','再生能源','太陽能','風電']
   ];
 
+  // ESG 共好圈專用。每一組的詞都先對 4,289 篇真實文章實測過出現次數，
+  // 幾乎查不到的詞（例如「洗綠」只有 1 篇、「綠色債券」3 篇）就不放進來，
+  // 避免產生點了搜不到東西的熱門關鍵字。
+  var SYNONYM_GROUPS_ESG = [
+    ['淨零','碳中和','減碳','淨零排放','淨零轉型','溫室氣體','碳排'],
+    ['碳權','碳費','碳交易','碳定價','碳稅','碳盤查','碳足跡','碳關稅','CBAM'],
+    ['ESG','永續','企業社會責任','CSR','永續報告書','SDGs'],
+    ['氣候變遷','氣候','極端氣候','暖化','COP'],
+    ['再生能源','綠電','太陽能','風電','光電','儲能','氫能','地熱','能源轉型'],
+    ['循環經濟','回收','再生','廢棄物','塑膠','資源循環'],
+    ['生物多樣性','生態','海洋','森林','水資源'],
+    ['供應鏈','綠色供應鏈','採購'],
+    ['公司治理','資訊揭露','漂綠'],
+    ['永續金融','綠色金融','影響力投資'],
+    ['AI','人工智慧','數位轉型'],
+    ['電動車','EV','交通'],
+    ['永續城市','城市','綠建築'],
+    ['人才','教育'],
+    ['社會企業','偏鄉','弱勢','DEI','多元共融'],
+    ['健康','醫療','高齡'],
+    ['農業','食物'],
+    ['核能']
+  ];
+
+  function synonymGroups() {
+    return currentSource === 'esg' ? SYNONYM_GROUPS_ESG : SYNONYM_GROUPS_GVM;
+  }
+
   function formatYearRange(minY, maxY) {
     if (!minY || !maxY) return '';
     return minY === maxY ? (minY + ' 年') : (minY + '～' + maxY + ' 年');
@@ -432,16 +546,19 @@
     var s = (text || '').trim();
     if (s.length <= maxLen) return s;
     var cut = s.slice(0, maxLen);
-    // 盡量在完整的句子/子句邊界斷開，避免剛好切在原文的引號或詞中間
-    var lastPunct = Math.max(cut.lastIndexOf('。'), cut.lastIndexOf('，'), cut.lastIndexOf('、'), cut.lastIndexOf('！'), cut.lastIndexOf('？'));
-    if (lastPunct >= maxLen * 0.5) return cut.slice(0, lastPunct + 1);
+    // 盡量在完整的句子邊界斷開，避免剛好切在原文的引號或詞中間；優先找句尾標點（。！？），
+    // 逗號/頓號斷句只當作退而求其次的選項，不然常常會切出「...、」這種半句
+    var strongPunct = Math.max(cut.lastIndexOf('。'), cut.lastIndexOf('！'), cut.lastIndexOf('？'));
+    if (strongPunct >= maxLen * 0.5) return cut.slice(0, strongPunct + 1);
+    var softPunct = Math.max(cut.lastIndexOf('，'), cut.lastIndexOf('、'));
+    if (softPunct >= maxLen * 0.5) return cut.slice(0, softPunct + 1);
     return cut + '…';
   }
 
   // 引言範本把摘要片段包進「」引號時，如果片段本身已經是完整句子（結尾有標點），
   // 就不要在引號外再補一個句號，避免變成「...。」。這種重複標點
   function quoteEnding(snippet) {
-    return /[。！？…]$/.test(snippet) ? snippet : (snippet + '。');
+    return /[。！？…，、]$/.test(snippet) ? snippet : (snippet + '。');
   }
 
   function uniqueCategories(articles) {
@@ -476,34 +593,34 @@
     return parts[0] ? (parts[0] + '年' + (parts[1] ? parts[1] + '月' : '')) : '';
   }
 
-  var INTRO_SIGNATURE = '\n\n——遠見線上讀智能編輯';
+  function introSignature() { return '\n\n——' + sourceConfig().label + '智能編輯'; }
 
   // 一般情境（精準命中且篇數 ≥ 2）用的輪替範本：以「智能編輯」第一人稱、對你直接說話，
   // 開頭帶入今天的真實日期，並直接引用其中一篇（依日期排序最新的精準命中）的真實標題、
   // 摘要片段與真實分類分佈，確保不同關鍵字、不同文章組合產生的引言真的不一樣。
   var INTRO_TEMPLATES = [
     function (kw, count, yearRange, categoryText, hook) {
-      return '你最近過得好嗎？這次想跟你聊聊「' + kw + '」——翻找遠見雜誌的檔案庫時，最先跳出來的是 ' +
+      return '你最近過得好嗎？這次想跟你聊聊「' + kw + '」——翻找' + sourceConfig().label + '的檔案庫時，最先跳出來的是 ' +
         formatArticleDate(hook.y) + ' 的一篇報導，裡頭寫著：「' + quoteEnding(introSnippet(hook.summary, 40)) + '」' +
-        '我另外挑了 ' + (count - 1) + ' 篇，從' + categoryText + '都有，希望能陪你把「' + kw + '」這件事看得更立體一些。' + INTRO_SIGNATURE;
+        '我另外挑了 ' + (count - 1) + ' 篇，從' + categoryText + '都有，希望能陪你把「' + kw + '」這件事看得更立體一些。' + introSignature();
     },
     function (kw, count, yearRange, categoryText, hook) {
       return '又到了整理「' + kw + '」的時候。這次翻遍典藏，最讓我停下來的是 ' + formatArticleDate(hook.y) +
         ' 那篇——裡面提到：「' + quoteEnding(introSnippet(hook.summary, 40)) + '」加上另外 ' + (count - 1) + ' 篇，橫跨' +
-        categoryText + '，希望這幾篇報導能幫你把「' + kw + '」的脈絡串起來。' + INTRO_SIGNATURE;
+        categoryText + '，希望這幾篇報導能幫你把「' + kw + '」的脈絡串起來。' + introSignature();
     },
     function (kw, count, yearRange, categoryText, hook) {
-      return '你好。今天想和你分享「' + kw + '」這個題目——遠見雜誌在 ' + formatArticleDate(hook.y) +
+      return '你好。今天想和你分享「' + kw + '」這個題目——' + sourceConfig().label + '在 ' + formatArticleDate(hook.y) +
         ' 寫過：「' + introSnippet(hook.summary, 40) + '」，這句話我印象很深。這次一共挑了 ' + count + ' 篇，涵蓋' +
-        categoryText + '，希望能陪你多看懂「' + kw + '」一點。' + INTRO_SIGNATURE;
+        categoryText + '，希望能陪你多看懂「' + kw + '」一點。' + introSignature();
     }
   ];
 
   // 精準命中恰好 1 篇時：不裝作有「不同時期、不同角度」，如實告知只有 1 篇，直接引用這篇
   function buildSingleIntro(kw, yearRange, hook) {
-    return '你最近過得好嗎？這次想跟你聊聊「' + kw + '」——不過老實說，遠見雜誌典藏裡直接相關的真實報導只有 1 篇（' +
+    return '你最近過得好嗎？這次想跟你聊聊「' + kw + '」——不過老實說，' + sourceConfig().label + '典藏裡直接相關的真實報導只有 1 篇（' +
       formatArticleDate(hook.y) + '）：「' + quoteEnding(introSnippet(hook.summary, 50)) + '」篇數不多，但這確實是遠見對「' + kw +
-      '」的第一手記錄，還是想讓你看看。' + INTRO_SIGNATURE;
+      '」的第一手記錄，還是想讓你看看。' + introSignature();
   }
 
   // 精準命中篇數不足、補了同分類延伸閱讀時：把組成講清楚，並引用精準命中那篇的真實標題，
@@ -515,7 +632,7 @@
       : (exactArticles.length + ' 篇（' + exactYearRange + '），包含〈' + hook.title + '〉等');
     return '你最近過得好嗎？這次想跟你聊聊「' + kw + '」——翻找檔案庫後，直接相關的真實報導找到 ' + exactPart +
       '，篇數還沒到你設定的數量，所以我另外從「' + categoryPhrase(category) + '」這個類別裡，挑了 ' + relatedCount +
-      ' 篇比較新的報導補上，內容同樣真實，但嚴格來說不是「' + kw + '」的直接報導，下方文章清單已經幫你標示出來，用之前留意一下。' + INTRO_SIGNATURE;
+      ' 篇比較新的報導補上，內容同樣真實，但嚴格來說不是「' + kw + '」的直接報導，下方文章清單已經幫你標示出來，用之前留意一下。' + introSignature();
   }
   var introTemplateIdx = 0;
 
@@ -523,8 +640,9 @@
     var kw = keyword.trim();
     if (!kw) return [];
     var lower = kw.toLowerCase();
-    for (var i = 0; i < SYNONYM_GROUPS.length; i++) {
-      var group = SYNONYM_GROUPS[i];
+    var groups = synonymGroups();
+    for (var i = 0; i < groups.length; i++) {
+      var group = groups[i];
       var hit = group.some(function (term) {
         var t = term.toLowerCase();
         return t === lower || t.includes(lower) || lower.includes(t);
@@ -550,7 +668,7 @@
   function ensureSummaries(years) {
     var toFetch = years.filter(function (y) { return y && !summariesCache[y]; });
     return Promise.all(toFetch.map(function (y) {
-      return fetch('data/summaries/' + y + '.json')
+      return fetch(sourceConfig().summariesDir + y + '.json')
         .then(function (r) { return r.ok ? r.json() : {}; })
         .then(function (map) { summariesCache[y] = map; })
         .catch(function () { summariesCache[y] = {}; });
@@ -677,17 +795,26 @@
     return tpl(keyword, exactArticles.length, exactYearRange, categoryText, hook);
   }
 
-  (function populateYears() {
+  // 年份選單依「實際載入的資料」產生，不寫死年份範圍：ESG 共好圈最早只到 2005 年，
+  // 如果沿用雜誌本誌的 1987 起算，會列出十幾個永遠選不到東西的年份，讓人誤以為有那麼久的典藏。
+  function populateYears() {
+    var years = ARTICLES.map(yearOf).filter(function (y) { return y > 0; });
+    var minY = years.length ? Math.min.apply(null, years) : 1987;
+    var maxY = years.length ? Math.max.apply(null, years) : new Date().getFullYear();
+    var previous = yearSelect.value;
+    yearSelect.innerHTML = '';
     var opt0 = document.createElement('option');
     opt0.value = ''; opt0.textContent = '不限年份';
     yearSelect.appendChild(opt0);
-    for (var y = 2026; y >= 1987; y--) {
+    for (var y = maxY; y >= minY; y--) {
       var opt = document.createElement('option');
       opt.value = String(y);
       opt.textContent = y + ' 年之後';
       yearSelect.appendChild(opt);
     }
-  })();
+    // 換資料庫後若原本選的年份在新資料庫也存在就保留，否則回到「不限年份」
+    yearSelect.value = (previous && previous >= minY && previous <= maxY) ? previous : '';
+  }
 
   (function setDefaultDate() {
     var d = new Date();
@@ -759,11 +886,13 @@
   var DUP_REMINDER_DAYS = 14;
 
   function recordUsedArticles(articleIds) {
+    // GVM 和 ESG 的文章 id 是各自獨立編號，同一組數字可能剛好撞號到兩邊，
+    // 存之前一律加上來源前綴，避免「近期用過」提醒跨資料庫誤判成同一篇。
     var history = loadJSON(USED_HISTORY_KEY, []);
     var byId = {};
     history.forEach(function (h) { byId[h.i] = h; });
     var today = formatToday('-');
-    articleIds.forEach(function (id) { if (id) byId[id] = { i: id, usedAt: today }; });
+    articleIds.forEach(function (id) { if (id) byId[currentSource + ':' + id] = { i: currentSource + ':' + id, usedAt: today }; });
     var merged = Object.keys(byId).map(function (k) { return byId[k]; });
     merged.sort(function (a, b) { return a.usedAt < b.usedAt ? 1 : -1; });
     if (merged.length > USED_HISTORY_MAX) merged = merged.slice(0, USED_HISTORY_MAX);
@@ -773,7 +902,7 @@
   function getRecentUse(articleId) {
     if (!articleId) return null;
     var history = loadJSON(USED_HISTORY_KEY, []);
-    var found = history.find(function (h) { return h.i === articleId; });
+    var found = history.find(function (h) { return h.i === currentSource + ':' + articleId; });
     if (!found) return null;
     var cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - DUP_REMINDER_DAYS);
@@ -781,20 +910,22 @@
     return found.usedAt;
   }
 
-  // 最近搜尋過的關鍵字快選：本機記錄，方便每週重複策展同一批常用主題
-  var RECENT_KW_KEY = 'gvm_recent_keywords_v1';
+  // 最近搜尋過的關鍵字快選：本機記錄，方便每週重複策展同一批常用主題。
+  // 兩個資料庫各記各的——ESG 專用詞（碳權、循環經濟）出現在雜誌本誌的快選清單裡，
+  // 點下去只會搜到很差的結果，反之亦然。
+  function recentKwKey() { return 'gvm_recent_keywords_v1:' + currentSource; }
   var RECENT_KW_MAX = 8;
 
   function recordRecentKeyword(kw) {
-    var list = loadJSON(RECENT_KW_KEY, []).filter(function (k) { return k !== kw; });
+    var list = loadJSON(recentKwKey(), []).filter(function (k) { return k !== kw; });
     list.unshift(kw);
     if (list.length > RECENT_KW_MAX) list = list.slice(0, RECENT_KW_MAX);
-    saveJSON(RECENT_KW_KEY, list);
+    saveJSON(recentKwKey(), list);
     renderRecentKeywords();
   }
 
   function renderRecentKeywords() {
-    var list = loadJSON(RECENT_KW_KEY, []);
+    var list = loadJSON(recentKwKey(), []);
     if (!list.length) { recentKeywordsBlock.style.display = 'none'; return; }
     recentKeywordsList.innerHTML = '';
     list.forEach(function (kw) {
@@ -833,7 +964,7 @@
     if (!maxYm) return [];
     var minYm = shiftYm(maxYm, HOT_KEYWORDS_WINDOW_MONTHS);
     var pool = ARTICLES.filter(function (a) { var ym = ymOf(a); return ym >= minYm && ym <= maxYm; });
-    var ranked = SYNONYM_GROUPS.map(function (group) {
+    var ranked = synonymGroups().map(function (group) {
       var termsLower = group.map(function (t) { return t.toLowerCase(); });
       var count = 0;
       pool.forEach(function (a) {
@@ -1036,9 +1167,9 @@
     }
     var html = '';
     html += '<div class="gvm-pv-masthead">' +
-      '<div class="gvm-pv-eyebrow">GVM WEEKLY CURATION</div>' +
-      '<div class="gvm-pv-title">遠見線上讀</div>' +
-      '<div class="gvm-pv-sub">每週智能策展・僅收錄遠見雜誌紙本典藏文章</div>' +
+      '<div class="gvm-pv-eyebrow">' + escapeHtml(sourceConfig().previewEyebrow) + '</div>' +
+      '<div class="gvm-pv-title">' + escapeHtml(sourceConfig().label) + '</div>' +
+      '<div class="gvm-pv-sub">' + escapeHtml(sourceConfig().previewSub) + '</div>' +
       '<div class="gvm-pv-date">' + formatToday() + '</div>' +
       '<div class="gvm-pv-rule"></div></div>';
     html += '<div class="gvm-pv-intro-wrap"><div class="gvm-pv-intro">' + escapeHtml(state.intro) + '</div></div>';
@@ -1059,10 +1190,10 @@
       html += '<div class="gvm-pv-section-divider"><span>國際焦點</span></div>';
       html += '<div class="gvm-pv-focus">' +
         '<div class="gvm-pv-focus-text">' + escapeHtml(fa.t + '。' + cleanExcerpt(fullTextFor(fa))) + '</div>' +
-        '<div class="gvm-pv-focus-source">資料來源：《遠見雜誌》全球焦點・' + escapeHtml(fa.y || '') + '　' +
+        '<div class="gvm-pv-focus-source">資料來源：《' + escapeHtml(sourceConfig().label) + '》' + escapeHtml(sourceConfig().focusCategory) + '・' + escapeHtml(fa.y || '') + '　' +
         '<a href="' + appendUtm(fa.url) + '" target="_blank" rel="noopener">完整報導 →</a></div></div>';
     }
-    html += '<div class="gvm-footnote">所有連結均來自遠見雜誌官網 (gvm.com.tw) 真實典藏文章，並自動附加 LINE 成效追蹤參數。</div>';
+    html += '<div class="gvm-footnote">所有連結均來自' + escapeHtml(sourceConfig().label) + '官網 (' + escapeHtml(sourceConfig().domain) + ') 真實典藏文章，並自動附加 LINE 成效追蹤參數。</div>';
     previewBody.innerHTML = html;
   }
 
@@ -1072,7 +1203,7 @@
 
   function computeGlobalFocus() {
     globalFocusCandidates = ARTICLES
-      .filter(function (a) { return a.s === GLOBAL_FOCUS_CATEGORY; })
+      .filter(function (a) { return a.s === sourceConfig().focusCategory; })
       .sort(function (a, b) { return (b.y || '').localeCompare(a.y || ''); });
     globalFocusArticle = globalFocusCandidates.length ? globalFocusCandidates[0] : null;
     populateFocusYearSelect();
@@ -1102,6 +1233,7 @@
     ensureSummaries([year]).then(function () {
       renderFocusList();
       renderPreview();
+      saveDraft();
     });
   }
 
@@ -1115,13 +1247,14 @@
     ensureSummaries([year]).then(function () {
       renderFocusList();
       renderPreview();
+      saveDraft();
     });
   }
 
   function renderFocusList() {
     var el = $('gvm-focus-list');
     if (!globalFocusArticle) {
-      el.innerHTML = '<span class="gvm-copy-hint">目前資料庫中沒有「' + GLOBAL_FOCUS_CATEGORY + '」分類的文章。</span>';
+      el.innerHTML = '<span class="gvm-copy-hint">目前資料庫中沒有「' + sourceConfig().focusCategory + '」分類的文章。</span>';
       return;
     }
     var a = globalFocusArticle;
@@ -1134,7 +1267,7 @@
     var link = document.createElement('a');
     link.href = a.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
     link.textContent = '完整報導 →';
-    source.appendChild(document.createTextNode('資料來源：《遠見雜誌》全球焦點・' + (a.y || '') + '　'));
+    source.appendChild(document.createTextNode('資料來源：《' + sourceConfig().label + '》' + sourceConfig().focusCategory + '・' + (a.y || '') + '　'));
     source.appendChild(link);
     el.appendChild(text);
     el.appendChild(source);
@@ -1143,6 +1276,14 @@
   function refreshAll() {
     renderEditList();
     renderPreview();
+    saveDraft();
+  }
+
+  // 打字時每個按鍵都寫一次 localStorage 太浪費，停手約 1 秒後才存
+  var draftSaveTimer = null;
+  function saveDraftSoon() {
+    clearTimeout(draftSaveTimer);
+    draftSaveTimer = setTimeout(saveDraft, 900);
   }
 
   function updateIntroCount() {
@@ -1297,6 +1438,7 @@
     listPanel.style.display = 'none';
     utmPanel.style.display = 'none';
     lastKeywordEl.textContent = '';
+    clearDraft();
     setStatus('資料庫共 ' + ARTICLES.length + ' 篇有摘要文章，可開始搜尋。');
     renderPreview();
     keywordInput.focus();
@@ -1306,6 +1448,7 @@
     state.intro = introEditEl.value;
     updateIntroCount();
     renderPreview();
+    saveDraftSoon();
   });
 
   editListEl.addEventListener('input', function (e) {
@@ -1317,6 +1460,7 @@
       if (countEl) countEl.textContent = e.target.value.length + ' 字';
     }
     renderPreview();
+    saveDraftSoon();
   });
 
   editListEl.addEventListener('click', function (e) {
@@ -1389,37 +1533,40 @@
   });
 
   function buildStandaloneDoc() {
+    // 下載的 HTML 是獨立檔案，帶不走頁面上的 CSS 變數，所以這裡要把當前資料庫的
+    // 配色實際字串代進去；否則在 ESG 模式下載會拿到深藍＋玫瑰金的雜誌版配色。
+    var pal = sourceConfig().exportPalette;
     var css = [
       '@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap");',
       'body{margin:0;background:#fdfcfb;color:#2a2f36;font-family:"Noto Sans TC",sans-serif;}',
       '.wrap{max-width:640px;margin:0 auto;padding:40px 24px 60px;}',
       '.gvm-pv-masthead{text-align:center;margin-bottom:26px;}',
-      '.gvm-pv-eyebrow{font-size:10px;letter-spacing:.3em;color:#a9746e;text-transform:uppercase;font-weight:700;margin-bottom:6px;}',
-      '.gvm-pv-title{font-family:"Noto Serif TC",serif;font-weight:900;font-size:22px;color:#0d2038;margin:0 0 6px;}',
+      '.gvm-pv-eyebrow{font-size:10px;letter-spacing:.3em;color:' + pal.decor + ';text-transform:uppercase;font-weight:700;margin-bottom:6px;}',
+      '.gvm-pv-title{font-family:"Noto Serif TC",serif;font-weight:900;font-size:22px;color:' + pal.deep + ';margin:0 0 6px;}',
       '.gvm-pv-sub{font-size:11.5px;color:#6b7280;}',
-      '.gvm-pv-date{font-size:11px;color:#4a6483;font-weight:700;letter-spacing:.05em;margin-top:8px;}',
-      '.gvm-pv-rule{width:40px;height:2px;background:#a9746e;margin:14px auto 0;}',
+      '.gvm-pv-date{font-size:11px;color:' + pal.soft + ';font-weight:700;letter-spacing:.05em;margin-top:8px;}',
+      '.gvm-pv-rule{width:40px;height:2px;background:' + pal.decor + ';margin:14px auto 0;}',
       '.gvm-pv-section-divider{display:flex;align-items:center;gap:12px;margin:32px 0 22px;}',
-      '.gvm-pv-section-divider::before,.gvm-pv-section-divider::after{content:"";flex:1;height:1px;background:#dde3ea;}',
-      '.gvm-pv-section-divider span{font-size:10px;letter-spacing:.25em;color:#a9746e;text-transform:uppercase;font-weight:700;white-space:nowrap;}',
+      '.gvm-pv-section-divider::before,.gvm-pv-section-divider::after{content:"";flex:1;height:1px;background:' + pal.line + ';}',
+      '.gvm-pv-section-divider span{font-size:10px;letter-spacing:.25em;color:' + pal.decor + ';text-transform:uppercase;font-weight:700;white-space:nowrap;}',
       '.gvm-pv-intro-wrap{margin:0 0 22px;}',
-      '.gvm-pv-intro{font-family:"Noto Serif TC",serif;font-size:15.5px;font-weight:600;line-height:1.85;color:#2a2f36;border-left:3px solid #d9b8a9;padding:6px 0 6px 16px;white-space:pre-wrap;}',
+      '.gvm-pv-intro{font-family:"Noto Serif TC",serif;font-size:15.5px;font-weight:600;line-height:1.85;color:#2a2f36;border-left:3px solid ' + pal.decorLight + ';padding:6px 0 6px 16px;white-space:pre-wrap;}',
       '.gvm-pv-focus{margin:0 0 22px;}',
-      '.gvm-pv-focus-label{font-size:11px;letter-spacing:.15em;color:#4a6483;text-transform:uppercase;font-weight:700;margin-bottom:8px;}',
+      '.gvm-pv-focus-label{font-size:11px;letter-spacing:.15em;color:' + pal.soft + ';text-transform:uppercase;font-weight:700;margin-bottom:8px;}',
       '.gvm-pv-focus-text{font-family:"Noto Serif TC",serif;font-size:15px;font-weight:600;line-height:1.85;color:#2a2f36;}',
       '.gvm-pv-focus-source{font-size:11px;color:#6b7280;margin-top:10px;}',
-      '.gvm-pv-focus-source a{color:#4a6483;text-decoration:none;}',
+      '.gvm-pv-focus-source a{color:' + pal.soft + ';text-decoration:none;}',
       '.gvm-pv-item{display:flex;gap:16px;padding:20px 0;}',
-      '.gvm-pv-item + .gvm-pv-item{border-top:1px solid #dde3ea;}',
+      '.gvm-pv-item + .gvm-pv-item{border-top:1px solid ' + pal.line + ';}',
       '.gvm-pv-media{display:flex;flex-direction:column;align-items:flex-start;gap:8px;flex-shrink:0;width:76px;}',
-      '.gvm-pv-num{font-family:"Noto Serif TC",serif;font-weight:700;font-size:28px;color:#a9746e;line-height:1;text-align:left;}',
-      '.gvm-pv-thumb{width:76px;height:76px;border-radius:6px;object-fit:cover;background:#eef1f5;}',
+      '.gvm-pv-num{font-family:"Noto Serif TC",serif;font-weight:700;font-size:28px;color:' + pal.decor + ';line-height:1;text-align:left;}',
+      '.gvm-pv-thumb{width:76px;height:76px;border-radius:6px;object-fit:cover;background:' + pal.thumbBg + ';}',
       '.gvm-pv-body{flex:1;min-width:0;}',
-      '.gvm-pv-source{font-size:10.5px;color:#4a6483;font-weight:700;letter-spacing:.04em;margin-bottom:5px;}',
-      '.gvm-pv-item-title{font-family:"Noto Serif TC",serif;font-size:15px;font-weight:700;color:#0d2038;margin:0 0 6px;line-height:1.5;}',
+      '.gvm-pv-source{font-size:10.5px;color:' + pal.soft + ';font-weight:700;letter-spacing:.04em;margin-bottom:5px;}',
+      '.gvm-pv-item-title{font-family:"Noto Serif TC",serif;font-size:15px;font-weight:700;color:' + pal.deep + ';margin:0 0 6px;line-height:1.5;}',
       '.gvm-pv-summary{font-size:12.5px;line-height:1.7;color:#2a2f36;margin-bottom:8px;}',
-      '.gvm-pv-link{font-size:11.5px;color:#16325c;text-decoration:none;font-weight:700;border-bottom:1px solid #4a6483;padding-bottom:1px;}',
-      '.gvm-footnote{text-align:center;font-size:11px;color:#6b7280;margin-top:30px;padding-top:18px;border-top:1px solid #dde3ea;line-height:1.7;}',
+      '.gvm-pv-link{font-size:11.5px;color:' + pal.accent + ';text-decoration:none;font-weight:700;border-bottom:1px solid ' + pal.soft + ';padding-bottom:1px;}',
+      '.gvm-footnote{text-align:center;font-size:11px;color:#6b7280;margin-top:30px;padding-top:18px;border-top:1px solid ' + pal.line + ';line-height:1.7;}',
       '@media (max-width:900px){',
       '.gvm-pv-item{flex-direction:column;}',
       '.gvm-pv-media{width:100%;}',
@@ -1430,7 +1577,7 @@
     ].join('\n');
     return '<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8">' +
       '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-      '<title>遠見線上讀｜' + escapeHtml(state.keyword) + '</title>' +
+      '<title>' + escapeHtml(sourceConfig().label) + '｜' + escapeHtml(state.keyword) + '</title>' +
       '<style>' + css + '</style></head><body><div class="wrap">' + previewBody.innerHTML + '</div></body></html>';
   }
 
@@ -1440,7 +1587,7 @@
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = '遠見線上讀_' + state.keyword + '_' + formatToday('') + '.html';
+    a.download = sourceConfig().label + '_' + state.keyword + '_' + formatToday('') + '.html';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1449,19 +1596,174 @@
     setStatus('HTML 已下載，可直接開啟或轉發給同事。');
   });
 
-  async function init() {
+  function updateSourceUI() {
+    var cfg = sourceConfig();
+    document.body.classList.toggle('source-esg', currentSource === 'esg');
+    sourceGvmBtn.classList.toggle('active', currentSource === 'gvm');
+    sourceEsgBtn.classList.toggle('active', currentSource === 'esg');
+    keywordInput.placeholder = cfg.keywordPlaceholder;
+    focusPanelLabelEl.textContent = '4・國際焦點（自動帶入，' + cfg.label + '真實報導）';
+    // utm_campaign 依資料庫帶不同預設值，讓 LINE 成效報表能分辨這則推播來自哪個資料庫。
+    // 只在同仁沒有自己改過的情況下才覆蓋，不動手改他們手動填的值。
+    var otherCampaigns = Object.keys(DATA_SOURCES).map(function (k) { return DATA_SOURCES[k].utmCampaign; });
+    if (otherCampaigns.indexOf(utmCampaignInput.value.trim()) !== -1 || !utmCampaignInput.value.trim()) {
+      utmCampaignInput.value = cfg.utmCampaign;
+    }
+  }
+
+  function clearWorkspace() {
+    state = { keyword: '', intro: '', articles: [], yearLimit: 0 };
+    keywordInput.value = '';
+    introEditEl.value = '';
+    updateIntroCount();
+    introPanel.style.display = 'none';
+    listPanel.style.display = 'none';
+    utmPanel.style.display = 'none';
+    lastKeywordEl.textContent = '';
+    renderPreview();
+  }
+
+  async function loadSource(source, isSwitch) {
+    currentSource = source;
+    updateSourceUI();
+    generateBtn.disabled = true;
+    sourceCaptionEl.textContent = '資料庫載入中…';
+
+    if (isSwitch) {
+      // 換資料庫時清空目前的搜尋結果與全文快取，避免殘留另一個資料庫的內容
+      clearWorkspace();
+      summariesCache = {};
+    }
+
     try {
-      var res = await fetch(DATA_URL);
+      var res = await fetch(sourceConfig().dataUrl);
       var data = await res.json();
       ARTICLES = data.articles;
       generateBtn.disabled = false;
-      setStatus('資料庫共 ' + ARTICLES.length + ' 篇有摘要文章（1987–2026），可開始搜尋。');
+      var cfg = sourceConfig();
+      populateYears();
+      sourceCaptionEl.textContent = '目前資料庫：' + cfg.label + '（' + ARTICLES.length + ' 篇真實文章・' + cfg.yearRangeLabel + '・零 API 呼叫）';
+      setStatus('資料庫共 ' + ARTICLES.length + ' 篇有摘要文章（' + cfg.yearRangeLabel + '），可開始搜尋。');
       computeGlobalFocus();
       renderHotKeywords();
       renderRecentKeywords();
     } catch (e) {
+      sourceCaptionEl.textContent = '';
       setStatus('資料庫載入失敗，請重新整理頁面', true);
       console.error(e);
+    }
+  }
+
+  function switchSource(source) {
+    if (source === currentSource) return;
+    // 已經選好文章、編好引言時，換資料庫等於整份重來——先確認過再清空，避免手滑點掉一整份工作
+    if (state.articles.length) {
+      var ok = window.confirm('切換到「' + DATA_SOURCES[source].label + '」會清空目前這份策展（' +
+        state.articles.length + ' 篇文章與編者的話）。\n\n確定要切換嗎？');
+      if (!ok) return;
+    }
+    clearDraft();
+    loadSource(source, true);
+  }
+
+  sourceGvmBtn.addEventListener('click', function () { switchSource('gvm'); });
+  sourceEsgBtn.addEventListener('click', function () { switchSource('esg'); });
+
+  // ---- 草稿自動保存 ----------------------------------------------------------
+  // 每週策展做到一半被打斷是常態，關掉分頁不該讓整份工作消失。狀態存在瀏覽器本機
+  // （不上傳、不經過任何伺服器），下次打開若有未完成的草稿就問要不要接續。
+  var DRAFT_KEY = 'gvm_curation_draft_v1';
+  var DRAFT_MAX_AGE_DAYS = 7;
+  var draftBannerEl = $('gvm-draft-banner');
+  var draftTextEl = $('gvm-draft-text');
+  var restoringDraft = false;
+
+  function saveDraft() {
+    if (restoringDraft) return;
+    if (!state.articles.length) { clearDraft(); return; }
+    saveJSON(DRAFT_KEY, {
+      source: currentSource,
+      keyword: state.keyword,
+      yearLimit: state.yearLimit,
+      intro: state.intro,
+      articles: state.articles,
+      focusId: globalFocusArticle ? globalFocusArticle.i : '',
+      savedAt: new Date().toISOString()
+    });
+  }
+
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+    draftBannerEl.classList.remove('show');
+  }
+
+  function readDraft() {
+    var d = loadJSON(DRAFT_KEY, null);
+    if (!d || !d.articles || !d.articles.length || !DATA_SOURCES[d.source]) return null;
+    var cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - DRAFT_MAX_AGE_DAYS);
+    if (new Date(d.savedAt) < cutoff) { clearDraft(); return null; }
+    return d;
+  }
+
+  function formatDraftTime(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
+      String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  async function restoreDraft(draft) {
+    restoringDraft = true;
+    draftBannerEl.classList.remove('show');
+    await loadSource(draft.source, draft.source !== currentSource);
+
+    state.keyword = draft.keyword;
+    state.yearLimit = draft.yearLimit || 0;
+    state.articles = draft.articles;
+    state.intro = draft.intro;
+
+    keywordInput.value = draft.keyword;
+    yearSelect.value = draft.yearLimit ? String(draft.yearLimit) : '';
+    countSelect.value = String(draft.articles.length);
+    introEditEl.value = draft.intro;
+    updateIntroCount();
+    introPanel.style.display = 'block';
+    listPanel.style.display = 'block';
+    utmPanel.style.display = 'block';
+
+    if (draft.focusId) {
+      var match = globalFocusCandidates.find(function (a) { return a.i === draft.focusId; });
+      if (match) {
+        globalFocusArticle = match;
+        focusYearSelect.value = focusYearOf(match);
+        await ensureSummaries([focusYearOf(match)]);
+        renderFocusList();
+      }
+    }
+
+    // 文章全文可能還沒載入（草稿只存卡片上已編輯好的文字，不重抓），這裡直接用草稿內容重繪
+    refreshAll();
+    lastKeywordEl.textContent = '上次搜尋：「' + draft.keyword + '」・' +
+      (draft.yearLimit ? draft.yearLimit + '年之後' : '不限年份') + '・' + draft.articles.length + '篇';
+    setStatus('已接續 ' + formatDraftTime(draft.savedAt) + ' 儲存的草稿（' + draft.articles.length + ' 篇）。');
+    restoringDraft = false;
+  }
+
+  $('gvm-draft-restore').addEventListener('click', function () {
+    var draft = readDraft();
+    if (draft) restoreDraft(draft);
+  });
+  $('gvm-draft-discard').addEventListener('click', function () { clearDraft(); });
+
+  async function init() {
+    var draft = readDraft();
+    await loadSource(draft ? draft.source : 'gvm', false);
+    if (draft) {
+      draftTextEl.innerHTML = '找到 <b>' + formatDraftTime(draft.savedAt) + '</b> 未完成的策展草稿：' +
+        '<b>' + escapeHtml(DATA_SOURCES[draft.source].label) + '</b>・關鍵字「' +
+        escapeHtml(draft.keyword) + '」・' + draft.articles.length + ' 篇。';
+      draftBannerEl.classList.add('show');
     }
   }
 
