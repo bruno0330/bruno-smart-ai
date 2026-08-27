@@ -32,6 +32,7 @@
 - GitHub 帳號 `bruno0330`，單一 monorepo，不為每部門開獨立 repo。
 - 資料夾結構：`index.html`（入口頁）、`assets/`（品牌 Logo）、`data/`（共用資料庫，`gvm_index_full.json` 29,583 篇遠見文章索引）、`smart-curation/`、`digital-marketing/`、`scripts/`、`.github/workflows/`。
 - **雙機器已設定**：兩台 Mac 都能 push 到同一個 repo，SSH 金鑰與 git 身份各自獨立設定（金鑰不可跨機器複製）。兩邊都有未 push 的 commit 時，push 前留意先 pull/rebase 避免衝突。
+- **SSH 走 443 是必要設定，不是舊機器殘留習慣**：`~/.ssh/config` 把 GitHub 的 Host 改成 `ssh.github.com` + `Port 443`。實測發現：單純 `ssh -T git@github.com` 認證測試走 port 22 會過，但 `git push` 大量資料時 port 22 常被網路環境擋/降速到 timeout，443 沒有這個問題。看到這條設定不要因為「新機器 port 22 測試通」就改回 22，兩者測的東西不一樣。
 - 每月文章自動化：`scripts/monthly_scrape.py` + GitHub Actions（每月 5 號跑，開 PR 給人工審核，不直接推 main）。
 
 ## 已上線工具速覽
