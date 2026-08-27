@@ -892,6 +892,15 @@
     });
   }
 
+  function moveArticle(index, direction) {
+    var target = index + direction;
+    if (target < 0 || target >= state.articles.length) return;
+    var tmp = state.articles[index];
+    state.articles[index] = state.articles[target];
+    state.articles[target] = tmp;
+    refreshAll();
+  }
+
   function renderEditList() {
     editListEl.innerHTML = '';
     state.articles.forEach(function (a, i) {
@@ -921,6 +930,26 @@
 
       var actions = document.createElement('div');
       actions.className = 'gvm-edit-actions';
+
+      var moveUpBtn = document.createElement('button');
+      moveUpBtn.type = 'button';
+      moveUpBtn.className = 'gvm-btn-outline gvm-btn-mini';
+      moveUpBtn.textContent = '▲';
+      moveUpBtn.title = '往上移';
+      moveUpBtn.dataset.action = 'move-up';
+      moveUpBtn.dataset.i = i;
+      if (i === 0) moveUpBtn.disabled = true;
+      actions.appendChild(moveUpBtn);
+
+      var moveDownBtn = document.createElement('button');
+      moveDownBtn.type = 'button';
+      moveDownBtn.className = 'gvm-btn-outline gvm-btn-mini';
+      moveDownBtn.textContent = '▼';
+      moveDownBtn.title = '往下移';
+      moveDownBtn.dataset.action = 'move-down';
+      moveDownBtn.dataset.i = i;
+      if (i === state.articles.length - 1) moveDownBtn.disabled = true;
+      actions.appendChild(moveDownBtn);
 
       var swapBtn = document.createElement('button');
       swapBtn.type = 'button';
@@ -1296,7 +1325,11 @@
     var i = parseInt(btn.dataset.i, 10);
     var article = state.articles[i];
     if (!article) return;
-    if (btn.dataset.action === 'swap') {
+    if (btn.dataset.action === 'move-up') {
+      moveArticle(i, -1);
+    } else if (btn.dataset.action === 'move-down') {
+      moveArticle(i, 1);
+    } else if (btn.dataset.action === 'swap') {
       swapArticle(i);
     } else if (btn.dataset.action === 'copy-link') {
       copyTextToClipboard(appendUtm(article.url),
