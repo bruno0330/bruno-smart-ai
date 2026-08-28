@@ -351,32 +351,47 @@
       </div>
 
       <div id="gvm-utm-panel" class="gvm-panel" style="display:none">
-        <button id="gvm-adv-toggle" class="gvm-adv-toggle">▸ 進階設定・UTM 追蹤參數</button>
-        <div id="gvm-adv-body" class="gvm-adv-body">
-          <div class="gvm-adv-grid">
-            <div class="gvm-field">
-              <label for="gvm-utm-source">utm_source</label>
-              <input id="gvm-utm-source" type="text" value="line">
-            </div>
-            <div class="gvm-field">
-              <label for="gvm-utm-medium">utm_medium</label>
-              <input id="gvm-utm-medium" type="text" value="social">
-            </div>
-            <div class="gvm-field">
-              <label for="gvm-utm-campaign">utm_campaign</label>
-              <input id="gvm-utm-campaign" type="text" value="gvm_curation">
-            </div>
-            <div class="gvm-field">
-              <label for="gvm-utm-date">日期（用於 utm_content 後綴）</label>
-              <input id="gvm-utm-date" type="date">
-            </div>
-            <div class="gvm-field">
-              <label for="gvm-utm-from">from</label>
-              <input id="gvm-utm-from" type="text" value="line">
+        <button id="gvm-line-toggle" class="gvm-adv-toggle">▸ LINE 推播文字・開頭與結尾文案</button>
+        <div id="gvm-line-body" class="gvm-adv-body">
+          <div class="gvm-field">
+            <label for="gvm-line-header">開頭文案（排在文章清單之前）</label>
+            <textarea id="gvm-line-header" class="gvm-intro-edit" style="min-height:170px"></textarea>
+          </div>
+          <div class="gvm-field" style="margin-top:10px">
+            <label for="gvm-line-footer">結尾文案（排在文章清單之後）</label>
+            <textarea id="gvm-line-footer" class="gvm-intro-edit" style="min-height:70px"></textarea>
+          </div>
+          <div class="gvm-copy-hint" style="margin-top:6px">兩段文案分資料庫記在這台電腦，下次打開自動帶回。文章清單會自動插在中間，格式為「1.標題」換行「👉連結」。</div>
+        </div>
+        <div id="gvm-utm-section">
+          <button id="gvm-adv-toggle" class="gvm-adv-toggle">▸ 進階設定・UTM 追蹤參數</button>
+          <div id="gvm-adv-body" class="gvm-adv-body">
+            <div class="gvm-adv-grid">
+              <div class="gvm-field">
+                <label for="gvm-utm-source">utm_source</label>
+                <input id="gvm-utm-source" type="text" value="line">
+              </div>
+              <div class="gvm-field">
+                <label for="gvm-utm-medium">utm_medium</label>
+                <input id="gvm-utm-medium" type="text" value="social">
+              </div>
+              <div class="gvm-field">
+                <label for="gvm-utm-campaign">utm_campaign</label>
+                <input id="gvm-utm-campaign" type="text" value="gvm_curation">
+              </div>
+              <div class="gvm-field">
+                <label for="gvm-utm-date">日期（用於 utm_content 後綴）</label>
+                <input id="gvm-utm-date" type="date">
+              </div>
+              <div class="gvm-field">
+                <label for="gvm-utm-from">from</label>
+                <input id="gvm-utm-from" type="text" value="line">
+              </div>
             </div>
           </div>
         </div>
         <div class="gvm-copy-row">
+          <button id="gvm-copy-line" class="gvm-btn" style="align-self:center">複製 LINE 推播文字</button>
           <button id="gvm-copy-links" class="gvm-btn-outline">複製全部連結</button>
           <button id="gvm-download-html" class="gvm-btn-outline">下載完整 HTML</button>
           <span class="gvm-copy-hint">下載後可直接開啟或轉發給同事派發</span>
@@ -387,7 +402,7 @@
     <!-- RIGHT: live preview -->
     <div class="gvm-preview-wrap">
       <div class="gvm-preview-frame">
-        <div class="gvm-preview-bar">4・即時預覽</div>
+        <div class="gvm-preview-bar">即時預覽</div>
         <div id="gvm-preview-body" class="gvm-preview-body">
           <div class="gvm-pv-empty">輸入關鍵字並按「搜尋」後，這裡會即時顯示最終畫面</div>
         </div>
@@ -422,6 +437,12 @@
   var advBody = $('gvm-adv-body');
   var copyLinksBtn = $('gvm-copy-links');
   var downloadHtmlBtn = $('gvm-download-html');
+  var utmSectionEl = $('gvm-utm-section');
+  var lineToggle = $('gvm-line-toggle');
+  var lineBody = $('gvm-line-body');
+  var lineHeaderEl = $('gvm-line-header');
+  var lineFooterEl = $('gvm-line-footer');
+  var copyLineBtn = $('gvm-copy-line');
   var previewBody = $('gvm-preview-body');
 
   var utmSourceInput = $('gvm-utm-source');
@@ -436,9 +457,9 @@
   var DATA_SOURCES = {
     gvm: {
       label: '遠見線上讀', dataUrl: 'data/curation_index.json', summariesDir: 'data/summaries/',
-      focusCategory: '全球焦點', keywordPlaceholder: '例如：AI、淨零、高齡化', yearRangeLabel: '1987–2026',
+      focusCategory: '全球焦點', keywordPlaceholder: '例如：AI、淨零、高齡化',
       previewEyebrow: 'GVM WEEKLY CURATION', previewSub: '每週智能策展・僅收錄遠見雜誌紙本典藏文章', domain: 'gvm.com.tw',
-      utmCampaign: 'gvm_curation',
+      useUtm: true, utmCampaign: 'gvm_curation',
       exportPalette: {
         accent: '#16325c', deep: '#0d2038', soft: '#4a6483',
         decor: '#a9746e', decorLight: '#d9b8a9', line: '#dde3ea', thumbBg: '#eef1f5'
@@ -446,9 +467,12 @@
     },
     esg: {
       label: 'ESG遠見共好圈', dataUrl: 'data/esg_curation_index.json', summariesDir: 'data/esg_summaries/',
-      focusCategory: '全球趨勢', keywordPlaceholder: '例如：淨零、碳權、循環經濟', yearRangeLabel: '2005–2026',
+      focusCategory: '全球趨勢', keywordPlaceholder: '例如：淨零、碳權、循環經濟',
       previewEyebrow: 'ESG DAILY CURATION', previewSub: '每日智能策展・僅收錄ESG遠見共好圈真實報導', domain: 'esg.gvm.com.tw',
-      utmCampaign: 'esg_curation',
+      // ESG 共好圈的推播是分享給團隊看的，不是對外行銷檔期，沒有回頭看成效報表的需求，
+      // 所以整個模式不掛 UTM：面板隱藏、所有輸出（複製連結／下載 HTML／LINE 文字）都是乾淨網址。
+      // V2.0 曾為這裡準備 utmCampaign: 'esg_curation'，確認用不到後移除，不留沒人用的死設定。
+      useUtm: false,
       exportPalette: {
         accent: '#00a153', deep: '#00733b', soft: '#4a8a6a',
         decor: '#00a153', decorLight: '#b3e6cc', line: '#d6f0e2', thumbBg: '#eafaf1'
@@ -459,6 +483,25 @@
   function sourceConfig() { return DATA_SOURCES[currentSource]; }
 
   var ARTICLES = [];
+
+  // 這個資料庫實際涵蓋的年份區間，每次載入後由真實文章算出來，不寫死。
+  // 排序的新鮮度加分、年份選單、畫面上的說明文字全部共用這一組值——
+  // V2.0 只把年份選單改成動態，另外兩處還留著 1987–2026，資料一長就會互相矛盾。
+  var dataYearRange = { min: 0, max: 0, label: '' };
+
+  function computeYearRange() {
+    var min = 0, max = 0;
+    for (var i = 0; i < ARTICLES.length; i++) {
+      var y = yearOf(ARTICLES[i]);
+      if (!y) continue;
+      if (!min || y < min) min = y;
+      if (y > max) max = y;
+    }
+    dataYearRange.min = min;
+    dataYearRange.max = max;
+    dataYearRange.label = min ? (min + '–' + max) : '';
+  }
+
   var state = { keyword: '', intro: '', articles: [], yearLimit: 0 };
   var hotKeywordsBlock = $('gvm-hot-keywords');
   var hotKeywordsList = $('gvm-hot-keywords-list');
@@ -692,10 +735,14 @@
       if (title.includes(t)) score += isOriginal ? 10 : 7;
       if (excerpt.includes(t)) score += isOriginal ? 5 : 3;
     });
+    // 新鮮度加分依這個資料庫實際的年份區間正規化，不寫死 1987–2026：ESG 共好圈從 2005 年起，
+    // 套本誌的區間會把新舊差距壓縮掉（最舊的一篇也先拿到將近一半的加分）；寫死上限 2026 更麻煩——
+    // 每月自動爬進來的新文章一旦超過 2026，就會全部被夾在滿分，新鮮度等於失去鑑別力。
     if (score > 0) {
       var year = parseInt((article.y || '').split('/')[0], 10);
-      if (!isNaN(year)) {
-        var recency = Math.max(0, Math.min(1, (year - 1987) / (2026 - 1987)));
+      var span = dataYearRange.max - dataYearRange.min;
+      if (!isNaN(year) && span > 0) {
+        var recency = Math.max(0, Math.min(1, (year - dataYearRange.min) / span));
         score += recency * 3;
       }
     }
@@ -745,9 +792,14 @@
     var usedIssues = {};
     scored.forEach(function (item) {
       if (picked.length >= count) return;
-      var key = item.article.n || item.article.y;
-      if (usedIssues[key]) return;
-      usedIssues[key] = true;
+      // 一期一篇：本誌是月刊，同一期挑兩篇會讓整份策展看起來偏食。但 ESG 共好圈是網路媒體、
+      // 沒有期數（n 欄位實測 4,289 篇全為空字串），原本 `n || y` 會讓條件掉成「同一個月最多一篇」——
+      // 對幾乎每天發文的資料庫來說是無謂的限制，會硬擠掉分數更高的文章。沒有期數就不套用這條。
+      var issueKey = item.article.n;
+      if (issueKey) {
+        if (usedIssues[issueKey]) return;
+        usedIssues[issueKey] = true;
+      }
       picked.push(item.article);
     });
     if (picked.length < count) {
@@ -798,9 +850,8 @@
   // 年份選單依「實際載入的資料」產生，不寫死年份範圍：ESG 共好圈最早只到 2005 年，
   // 如果沿用雜誌本誌的 1987 起算，會列出十幾個永遠選不到東西的年份，讓人誤以為有那麼久的典藏。
   function populateYears() {
-    var years = ARTICLES.map(yearOf).filter(function (y) { return y > 0; });
-    var minY = years.length ? Math.min.apply(null, years) : 1987;
-    var maxY = years.length ? Math.max.apply(null, years) : new Date().getFullYear();
+    var minY = dataYearRange.min || 1987;
+    var maxY = dataYearRange.max || new Date().getFullYear();
     var previous = yearSelect.value;
     yearSelect.innerHTML = '';
     var opt0 = document.createElement('option');
@@ -830,6 +881,7 @@
   }
 
   function appendUtm(rawUrl) {
+    if (!sourceConfig().useUtm) return rawUrl;
     var mmdd = mmddFromDateValue(utmDateInput.value);
     var campaign = utmCampaignInput.value.trim();
     var content = mmdd ? campaign + '_' + mmdd : campaign;
@@ -1193,7 +1245,10 @@
         '<div class="gvm-pv-focus-source">資料來源：《' + escapeHtml(sourceConfig().label) + '》' + escapeHtml(sourceConfig().focusCategory) + '・' + escapeHtml(fa.y || '') + '　' +
         '<a href="' + appendUtm(fa.url) + '" target="_blank" rel="noopener">完整報導 →</a></div></div>';
     }
-    html += '<div class="gvm-footnote">所有連結均來自' + escapeHtml(sourceConfig().label) + '官網 (' + escapeHtml(sourceConfig().domain) + ') 真實典藏文章，並自動附加 LINE 成效追蹤參數。</div>';
+    // 頁尾這句會跟著下載的 HTML 一起送出去，所以不能寫死「已附加追蹤參數」——
+    // ESG 模式不掛 UTM，照舊寫就變成對收件者說了一句不成立的話。
+    html += '<div class="gvm-footnote">所有連結均來自' + escapeHtml(sourceConfig().label) + '官網 (' + escapeHtml(sourceConfig().domain) + ') 真實典藏文章' +
+      (sourceConfig().useUtm ? '，並自動附加 LINE 成效追蹤參數' : '') + '。</div>';
     previewBody.innerHTML = html;
   }
 
@@ -1491,6 +1546,30 @@
     advToggle.textContent = (open ? '▾' : '▸') + ' 進階設定・UTM 追蹤參數';
   });
 
+  lineToggle.addEventListener('click', function () {
+    var open = lineBody.classList.toggle('open');
+    lineToggle.textContent = (open ? '▾' : '▸') + ' LINE 推播文字・開頭與結尾文案';
+  });
+
+  lineHeaderEl.placeholder = '第一次使用請貼上你慣用的開頭文案（專欄名稱、問候語、區塊標題…），存好之後每次打開都會自動帶回來。';
+  lineFooterEl.placeholder = '第一次使用請貼上固定的結尾文案，例如訂閱電子報的邀請與連結。';
+  [lineHeaderEl, lineFooterEl].forEach(function (el) {
+    el.addEventListener('input', saveLineCopySoon);
+  });
+
+  copyLineBtn.addEventListener('click', function () {
+    if (!state.articles.length) return;
+    saveLineCopy();
+    copyTextToClipboard(buildLineText(),
+      function () {
+        recordUsedArticles(state.articles.map(function (a) { return a.i; }));
+        setStatus('LINE 推播文字已複製，可直接貼進 LINE 官方帳號。');
+        showButtonFeedback(copyLineBtn, '已複製');
+      },
+      function () { setStatus('複製失敗，請手動選取文字複製。', true); }
+    );
+  });
+
   [utmSourceInput, utmMediumInput, utmCampaignInput, utmDateInput, utmFromInput].forEach(function (el) {
     el.addEventListener('input', renderPreview);
   });
@@ -1531,6 +1610,65 @@
       function () { setStatus('複製失敗，請手動選取文字複製。', true); }
     );
   });
+
+  // ---- LINE 推播純文字 --------------------------------------------------------
+  // 格式對齊使用者實際在發的推播：固定開頭文案 →「1.標題／👉連結」清單 → 固定結尾文案。
+  // 兩點刻意不做，是使用者確認過的決定，不要「順手優化」回去：
+  //   1. 標題直接用文章卡片上的標題欄，不自動補、也不改寫「欄目前綴》」——原標題有就有、沒有就沒有。
+  //   2. 不插入「編者的話」。那段是給網頁版與下載 HTML 用的，LINE 版的導言走固定文案。
+  var LINE_COPY_DEFAULTS = {
+    // ESG 的預設值直接取自使用者提供的真實推播原文，不是範例文案，改動前先問過本人。
+    esg: {
+      header: [
+        '【遠見共好圈 x 趨勢咖啡Time】',
+        '週一來點 #永續新知#醒腦共學',
+        '',
+        '各位會員好！新的一週，用一則永續新知🌍喚醒你我對ESG新想像。',
+        '',
+        '遠見共好圈為您整理獨家ESG國際觀點與台灣趨勢：讓永續趨勢如咖啡般香醇醒腦，掌握時下關鍵議題，陪您開啟一週滿滿永續動能！',
+        '',
+        '📋ESG每週趨勢觀點報導📋'
+      ].join('\n'),
+      footer: [
+        '🌍了解更多ESG資訊，歡迎立即訂閱ESG遠見電子報：',
+        'https://gvmkt.psee.io/5bjb69'
+      ].join('\n')
+    },
+    // 遠見線上讀還沒有提供過真實的 LINE 推播範本，這裡就留空讓使用者自己填第一次，
+    // 不自行編一套看起來很像、實際上沒人在用的文案。
+    gvm: { header: '', footer: '' }
+  };
+
+  function lineCopyKey() { return 'gvm_line_copy_v1:' + currentSource; }
+
+  function loadLineCopy() {
+    var def = LINE_COPY_DEFAULTS[currentSource] || { header: '', footer: '' };
+    var saved = loadJSON(lineCopyKey(), null);
+    lineHeaderEl.value = (saved && typeof saved.header === 'string') ? saved.header : def.header;
+    lineFooterEl.value = (saved && typeof saved.footer === 'string') ? saved.footer : def.footer;
+  }
+
+  function saveLineCopy() {
+    saveJSON(lineCopyKey(), { header: lineHeaderEl.value, footer: lineFooterEl.value });
+  }
+
+  var lineCopySaveTimer = null;
+  function saveLineCopySoon() {
+    clearTimeout(lineCopySaveTimer);
+    lineCopySaveTimer = setTimeout(saveLineCopy, 900);
+  }
+
+  function buildLineText() {
+    var blocks = [];
+    var header = lineHeaderEl.value.trim();
+    if (header) blocks.push(header);
+    blocks.push(state.articles.map(function (a, i) {
+      return (i + 1) + '.' + a.title + '\n👉' + appendUtm(a.url);
+    }).join('\n\n'));
+    var footer = lineFooterEl.value.trim();
+    if (footer) blocks.push(footer);
+    return blocks.join('\n\n');
+  }
 
   function buildStandaloneDoc() {
     // 下載的 HTML 是獨立檔案，帶不走頁面上的 CSS 變數，所以這裡要把當前資料庫的
@@ -1603,12 +1741,18 @@
     sourceEsgBtn.classList.toggle('active', currentSource === 'esg');
     keywordInput.placeholder = cfg.keywordPlaceholder;
     focusPanelLabelEl.textContent = '4・國際焦點（自動帶入，' + cfg.label + '真實報導）';
-    // utm_campaign 依資料庫帶不同預設值，讓 LINE 成效報表能分辨這則推播來自哪個資料庫。
-    // 只在同仁沒有自己改過的情況下才覆蓋，不動手改他們手動填的值。
-    var otherCampaigns = Object.keys(DATA_SOURCES).map(function (k) { return DATA_SOURCES[k].utmCampaign; });
-    if (otherCampaigns.indexOf(utmCampaignInput.value.trim()) !== -1 || !utmCampaignInput.value.trim()) {
-      utmCampaignInput.value = cfg.utmCampaign;
+    utmSectionEl.style.display = cfg.useUtm ? 'block' : 'none';
+    if (cfg.useUtm) {
+      // utm_campaign 依資料庫帶不同預設值，讓 LINE 成效報表能分辨這則推播來自哪個資料庫。
+      // 只在同仁沒有自己改過的情況下才覆蓋，不動手改他們手動填的值。
+      var knownCampaigns = Object.keys(DATA_SOURCES)
+        .map(function (k) { return DATA_SOURCES[k].utmCampaign; })
+        .filter(Boolean);
+      if (knownCampaigns.indexOf(utmCampaignInput.value.trim()) !== -1 || !utmCampaignInput.value.trim()) {
+        utmCampaignInput.value = cfg.utmCampaign;
+      }
     }
+    loadLineCopy();
   }
 
   function clearWorkspace() {
@@ -1641,9 +1785,12 @@
       ARTICLES = data.articles;
       generateBtn.disabled = false;
       var cfg = sourceConfig();
+      computeYearRange();
       populateYears();
-      sourceCaptionEl.textContent = '目前資料庫：' + cfg.label + '（' + ARTICLES.length + ' 篇真實文章・' + cfg.yearRangeLabel + '・零 API 呼叫）';
-      setStatus('資料庫共 ' + ARTICLES.length + ' 篇有摘要文章（' + cfg.yearRangeLabel + '），可開始搜尋。');
+      var rangeText = dataYearRange.label ? dataYearRange.label + '・' : '';
+      sourceCaptionEl.textContent = '目前資料庫：' + cfg.label + '（' + ARTICLES.length + ' 篇真實文章・' + rangeText + '零 API 呼叫）';
+      setStatus('資料庫共 ' + ARTICLES.length + ' 篇有摘要文章' +
+        (dataYearRange.label ? '（' + dataYearRange.label + '）' : '') + '，可開始搜尋。');
       computeGlobalFocus();
       renderHotKeywords();
       renderRecentKeywords();
