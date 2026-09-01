@@ -354,6 +354,11 @@
         <button id="gvm-line-toggle" class="gvm-adv-toggle">▸ LINE 推播文字・開頭與結尾文案</button>
         <div id="gvm-line-body" class="gvm-adv-body">
           <div class="gvm-field">
+            <label for="gvm-line-date">推播日期（文案裡的日期變數依這天代入）</label>
+            <input id="gvm-line-date" type="date">
+          </div>
+          <div id="gvm-line-vars" class="gvm-copy-hint" style="margin:6px 0 12px"></div>
+          <div class="gvm-field">
             <label for="gvm-line-header">開頭文案（排在文章清單之前）</label>
             <textarea id="gvm-line-header" class="gvm-intro-edit" style="min-height:170px"></textarea>
           </div>
@@ -440,6 +445,8 @@
   var utmSectionEl = $('gvm-utm-section');
   var lineToggle = $('gvm-line-toggle');
   var lineBody = $('gvm-line-body');
+  var lineDateInput = $('gvm-line-date');
+  var lineVarsHintEl = $('gvm-line-vars');
   var lineHeaderEl = $('gvm-line-header');
   var lineFooterEl = $('gvm-line-footer');
   var copyLineBtn = $('gvm-copy-line');
@@ -1551,7 +1558,16 @@
     lineToggle.textContent = (open ? '▾' : '▸') + ' LINE 推播文字・開頭與結尾文案';
   });
 
-  lineHeaderEl.placeholder = '第一次使用請貼上你慣用的開頭文案（專欄名稱、問候語、區塊標題…），存好之後每次打開都會自動帶回來。';
+  // 推播日期每次載入都回到今天，不記在本機——記住舊日期只會複製出上一次的星期，
+  // 正是這次要修掉的那類問題。
+  (function setDefaultLineDate() {
+    var d = new Date();
+    lineDateInput.value = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  })();
+  lineDateInput.addEventListener('change', renderLineVarsHint);
+
+  lineHeaderEl.placeholder = '第一次使用請貼上你慣用的開頭文案（專欄名稱、問候語、區塊標題…），存好之後每次打開都會自動帶回來。可用 {{星期}}、{{日期}}、{{月日}} 讓日期跟著推播日自動變。';
   lineFooterEl.placeholder = '第一次使用請貼上固定的結尾文案，例如訂閱電子報的邀請與連結。';
   [lineHeaderEl, lineFooterEl].forEach(function (el) {
     el.addEventListener('input', saveLineCopySoon);
@@ -1621,7 +1637,7 @@
     esg: {
       header: [
         '【遠見共好圈 x 趨勢咖啡Time】',
-        '週一來點 #永續新知#醒腦共學',
+        '{{星期}}來點 #永續新知#醒腦共學',
         '',
         '各位會員好！新的一週，用一則永續新知🌍喚醒你我對ESG新想像。',
         '',
@@ -1639,13 +1655,72 @@
     gvm: { header: '', footer: '' }
   };
 
+  // 文案裡可用的日期變數。會這樣設計，是因為第一版把使用者範例裡的「週一」當成固定字串
+  // 直接凍進預設文案，結果週二按下複製還是印「週一」——星期本來就是跟著發送日走的變數，
+  // 不該寫死。日期取自「推播日期」欄位而非當下時間，這樣才能今天先把下週一的推播排好。
+  var LINE_DATE_VARS = [
+    { token: '{{星期}}', label: '{{星期}}', fn: function (d) { return '週' + '日一二三四五六'.charAt(d.getDay()); } },
+    { token: '{{日期}}', label: '{{日期}}', fn: function (d) {
+        return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
+      } },
+    { token: '{{月日}}', label: '{{月日}}', fn: function (d) { return (d.getMonth() + 1) + '/' + d.getDate(); } }
+  ];
+
+  function lineDateValue() {
+    var v = lineDateInput.value;
+    var d = v ? new Date(v + 'T00:00:00') : new Date();
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+
+  function fillLineDateVars(text) {
+    var d = lineDateValue();
+    LINE_DATE_VARS.forEach(function (v) {
+      text = text.split(v.token).join(v.fn(d));
+    });
+    return text;
+  }
+
+  // 文案欄裡看到的是 {{星期}}，貼出去才會變成「週二」。中間這段落差最容易讓人踩雷，
+  // 所以把代入後的實際結果直接寫在欄位下方，不用等複製出來才發現不對。
+  function renderLineVarsHint() {
+    var d = lineDateValue();
+    lineVarsHintEl.textContent = '可用變數（依上方日期代入）：' +
+      LINE_DATE_VARS.map(function (v) { return v.label + ' → ' + v.fn(d); }).join('　');
+  }
+
   function lineCopyKey() { return 'gvm_line_copy_v1:' + currentSource; }
+
+  // 第一版預設文案（把「週一」寫死的那版）。本機存檔如果與這串一字不差，代表使用者
+  // 從沒編輯過、只是被動存下了舊預設值——這種情況自動換成新版；只要有一個字不同就
+  // 代表是他自己寫的內容，一律不動。
+  var LINE_COPY_LEGACY_HEADERS = {
+    esg: [
+      '【遠見共好圈 x 趨勢咖啡Time】',
+      '週一來點 #永續新知#醒腦共學',
+      '',
+      '各位會員好！新的一週，用一則永續新知🌍喚醒你我對ESG新想像。',
+      '',
+      '遠見共好圈為您整理獨家ESG國際觀點與台灣趨勢：讓永續趨勢如咖啡般香醇醒腦，掌握時下關鍵議題，陪您開啟一週滿滿永續動能！',
+      '',
+      '📋ESG每週趨勢觀點報導📋'
+    ].join('\n')
+  };
 
   function loadLineCopy() {
     var def = LINE_COPY_DEFAULTS[currentSource] || { header: '', footer: '' };
     var saved = loadJSON(lineCopyKey(), null);
-    lineHeaderEl.value = (saved && typeof saved.header === 'string') ? saved.header : def.header;
-    lineFooterEl.value = (saved && typeof saved.footer === 'string') ? saved.footer : def.footer;
+    var header = (saved && typeof saved.header === 'string') ? saved.header : def.header;
+    var footer = (saved && typeof saved.footer === 'string') ? saved.footer : def.footer;
+
+    var legacy = LINE_COPY_LEGACY_HEADERS[currentSource];
+    var upgraded = !!(legacy && header === legacy);
+    if (upgraded) header = def.header;
+
+    lineHeaderEl.value = header;
+    lineFooterEl.value = footer;
+    // 升級後立刻寫回，否則每次載入都要再比對一次舊字串
+    if (upgraded) saveLineCopy();
+    renderLineVarsHint();
   }
 
   function saveLineCopy() {
@@ -1660,12 +1735,12 @@
 
   function buildLineText() {
     var blocks = [];
-    var header = lineHeaderEl.value.trim();
+    var header = fillLineDateVars(lineHeaderEl.value.trim());
     if (header) blocks.push(header);
     blocks.push(state.articles.map(function (a, i) {
       return (i + 1) + '.' + a.title + '\n👉' + appendUtm(a.url);
     }).join('\n\n'));
-    var footer = lineFooterEl.value.trim();
+    var footer = fillLineDateVars(lineFooterEl.value.trim());
     if (footer) blocks.push(footer);
     return blocks.join('\n\n');
   }
