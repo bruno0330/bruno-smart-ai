@@ -80,7 +80,10 @@
   .gvm-draft-btn.primary:hover{ background:#a37a20; }
 
   .gvm-layout{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:22px; align-items:start; }
-  @media (max-width:900px){ .gvm-layout{ grid-template-columns:1fr; } }
+  @media (max-width:900px){ .gvm-layout{ grid-template-columns:minmax(0,1fr); } }
+  /* grid 欄的最小值是 min-content，任一子項的最小內容寬過大就會把整欄撐開，
+     連帶讓另一欄跟著變寬。兩個子項都要能縮，只擋一邊沒有用。 */
+  .gvm-layout > *{ min-width:0; }
 
   .gvm-panel{ background:var(--panel-bg); border-radius:6px; padding:20px; }
   .gvm-panel + .gvm-panel{ margin-top:18px; }
@@ -226,10 +229,30 @@
   }
   .gvm-picked-main textarea{ resize:vertical; min-height:52px; margin-top:5px; }
   .gvm-picked-actions{ display:flex; gap:4px; flex-shrink:0; }
+  /* 窄螢幕上四顆按鈕會把標題擠成「範疇…」，根本認不出是哪一篇。
+     改成按鈕另起一行，標題拿回整行寬度。 */
+  @media (max-width:600px){
+    .gvm-picked-row{ flex-wrap:wrap; }
+    .gvm-picked-main{ flex:1 1 100%; }
+    .gvm-picked-actions{ width:100%; justify-content:flex-end; margin-top:7px; }
+  }
   .gvm-mail-empty{ font-size:12px; color:var(--text-soft); padding:10px 0; }
   .gvm-mail-frame{ background:#f4f6f5; padding:14px; max-height:78vh; overflow:auto; }
   /* 信件固定 600px 寬，預覽欄在手機上只有 3 百多 px。等比縮小整份預覽，
      比讓使用者左右拖看半封信合理。 */
+  .gvm-mail-kickoff{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .gvm-mail-actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .gvm-steps{ display:flex; gap:6px; margin:18px 0 0; flex-wrap:wrap; }
+  .gvm-step{
+    flex:1 1 auto; min-width:0; display:flex; align-items:center; justify-content:center; gap:6px;
+    background:#fff; border:1px solid var(--field-border); color:var(--text-soft);
+    font-family:inherit; font-size:12.5px; font-weight:700; padding:9px 8px;
+    border-radius:4px 4px 0 0; cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .gvm-step:hover:not(.active){ color:var(--accent); border-color:var(--accent-soft); }
+  .gvm-step.active{ color:var(--accent); border-color:var(--field-border); border-bottom-color:var(--accent); background:var(--panel-bg); }
+  .gvm-step-badge{ font-size:11px; font-weight:400; opacity:.75; }
+  .gvm-step-panel{ margin-top:0 !important; border-radius:0 0 6px 6px; }
   #gvm-mail-scale{ overflow:hidden; }
   /* grid item 預設 min-width:auto，不會縮到比內容小——固定 600px 的信件會直接
      把整欄撐開，量到的「可用寬度」就永遠是 600，縮放算出來自然是 1。 */
@@ -452,10 +475,49 @@
       </div>
       </div><!-- /gvm-curation-workspace -->
 
-      <!-- 會員溝通信件模式：Podcast 與文章各搜各的，各挑 5 則 -->
+      <!-- 會員溝通信件模式。步驟分頁：一次只顯示一段，順序等於信件本身的順序。
+           四個面板同時攤開時左欄有 1,540px，使用者得捲 1.5 個螢幕才看得到輸出按鈕，
+           而右側預覽是 sticky 的，編到第三段時看到的還是信件開頭——改哪裡看不到哪裡。 -->
       <div id="gvm-mail-workspace" style="display:none">
-        <div class="gvm-panel">
-          <div class="gvm-panel-label">1・Podcast 專訪</div>
+        <div class="gvm-panel gvm-mail-kickoff">
+          <button id="gvm-mail-autofill" class="gvm-btn" style="align-self:center">⚡ 一鍵生成初稿</button>
+          <span class="gvm-copy-hint">自動帶入最新 5 集 Podcast、近三個月 5 篇文章，以及依內容寫好的前言。之後逐項微調就好。</span>
+        </div>
+
+        <div class="gvm-steps" id="gvm-mail-steps">
+          <button type="button" class="gvm-step active" data-step="1">① 開頭</button>
+          <button type="button" class="gvm-step" data-step="2">② Podcast <span id="gvm-mp-count" class="gvm-step-badge"></span></button>
+          <button type="button" class="gvm-step" data-step="3">③ 文章 <span id="gvm-ma-count" class="gvm-step-badge"></span></button>
+          <button type="button" class="gvm-step" data-step="4">④ 結尾</button>
+        </div>
+
+        <div class="gvm-panel gvm-step-panel" data-step="1">
+          <div class="gvm-adv-grid">
+            <div class="gvm-field">
+              <label for="gvm-mc-sub">刊頭副標</label>
+              <input id="gvm-mc-sub" type="text">
+            </div>
+            <div class="gvm-field">
+              <label for="gvm-mc-date">寄送日期（署名日期與日期變數依這天代入）</label>
+              <input id="gvm-mc-date" type="date">
+            </div>
+          </div>
+          <div class="gvm-field" style="margin-top:12px">
+            <label for="gvm-mc-greet">問候語</label>
+            <input id="gvm-mc-greet" type="text">
+          </div>
+          <div class="gvm-intro-head" style="margin-top:14px">
+            <label for="gvm-mc-intro" style="font-size:11px;color:var(--text-soft);margin:0">前言</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span id="gvm-mc-intro-count" class="gvm-copy-hint"></span>
+              <button id="gvm-mc-regen" class="gvm-btn-outline">換一版</button>
+            </div>
+          </div>
+          <textarea id="gvm-mc-intro" class="gvm-intro-edit" style="min-height:104px;margin-top:6px"></textarea>
+          <div class="gvm-copy-hint" style="margin-top:6px">「換一版」依這期實際選到的內容重寫前言。可用 {{星期}}、{{日期}}、{{月日}}。</div>
+        </div>
+
+        <div class="gvm-panel gvm-step-panel" data-step="2" style="display:none">
           <div class="gvm-mail-search">
             <div class="gvm-field" style="flex:2 1 200px">
               <label for="gvm-mp-kw">關鍵字（留空＝依日期列出最新集數）</label>
@@ -463,13 +525,12 @@
             </div>
             <button id="gvm-mp-search" class="gvm-btn">搜尋</button>
           </div>
+          <button id="gvm-mp-cand-toggle" class="gvm-adv-toggle" style="display:none">▾ 候選清單</button>
           <div id="gvm-mp-cand" class="gvm-cand"></div>
-          <div class="gvm-panel-label" style="margin:18px 0 0">已選（拖不動就用箭頭調順序）</div>
           <div id="gvm-mp-picked" class="gvm-picked"></div>
         </div>
 
-        <div class="gvm-panel">
-          <div class="gvm-panel-label">2・永續文章</div>
+        <div class="gvm-panel gvm-step-panel" data-step="3" style="display:none">
           <div class="gvm-mail-search">
             <div class="gvm-field">
               <label for="gvm-ma-cat">分類</label>
@@ -485,47 +546,28 @@
             </div>
             <button id="gvm-ma-search" class="gvm-btn">搜尋</button>
           </div>
+          <button id="gvm-ma-cand-toggle" class="gvm-adv-toggle" style="display:none">▾ 候選清單</button>
           <div id="gvm-ma-cand" class="gvm-cand"></div>
-          <div class="gvm-panel-label" style="margin:18px 0 0">已選（標題與縮文都可以直接改）</div>
           <div id="gvm-ma-picked" class="gvm-picked"></div>
         </div>
 
-        <div class="gvm-panel">
-          <button id="gvm-mc-toggle" class="gvm-adv-toggle">▸ 信件文案・開頭與結尾</button>
-          <div id="gvm-mc-body" class="gvm-adv-body">
-            <div class="gvm-adv-grid">
-              <div class="gvm-field">
-                <label for="gvm-mc-sub">刊頭副標</label>
-                <input id="gvm-mc-sub" type="text">
-              </div>
-              <div class="gvm-field">
-                <label for="gvm-mc-date">寄送日期（署名日期與 {{月日}} 依這天代入）</label>
-                <input id="gvm-mc-date" type="date">
-              </div>
-            </div>
-            <div class="gvm-field" style="margin-top:10px">
-              <label for="gvm-mc-greet">問候語</label>
-              <input id="gvm-mc-greet" type="text">
-            </div>
-            <div class="gvm-field" style="margin-top:10px">
-              <label for="gvm-mc-intro">前言</label>
-              <textarea id="gvm-mc-intro" class="gvm-intro-edit" style="min-height:96px"></textarea>
-            </div>
-            <div class="gvm-field" style="margin-top:10px">
-              <label for="gvm-mc-outro">結尾</label>
-              <textarea id="gvm-mc-outro" class="gvm-intro-edit" style="min-height:70px"></textarea>
-            </div>
-            <div class="gvm-field" style="margin-top:10px">
-              <label for="gvm-mc-sign">署名</label>
-              <input id="gvm-mc-sign" type="text">
-            </div>
-            <div class="gvm-copy-hint" style="margin-top:6px">文案記在這台電腦，下次打開自動帶回。可用 {{星期}}、{{日期}}、{{月日}}。</div>
+        <div class="gvm-panel gvm-step-panel" data-step="4" style="display:none">
+          <div class="gvm-field">
+            <label for="gvm-mc-outro">結尾文案</label>
+            <textarea id="gvm-mc-outro" class="gvm-intro-edit" style="min-height:70px"></textarea>
           </div>
-          <div class="gvm-copy-row">
-            <button id="gvm-mail-copy" class="gvm-btn" style="align-self:center">複製為富文字</button>
-            <button id="gvm-mail-eml" class="gvm-btn-outline">下載 .eml</button>
-            <span class="gvm-copy-hint">複製後直接貼進 Outlook；.eml 雙擊即開成待寄郵件</span>
+          <div class="gvm-field" style="margin-top:12px">
+            <label for="gvm-mc-sign">署名</label>
+            <input id="gvm-mc-sign" type="text">
           </div>
+          <div class="gvm-copy-hint" style="margin-top:6px">文案記在這台電腦，下次打開自動帶回。</div>
+        </div>
+
+        <!-- 輸出按鈕放在步驟之外，任何一頁都按得到 -->
+        <div class="gvm-panel gvm-mail-actions">
+          <button id="gvm-mail-copy" class="gvm-btn" style="align-self:center">複製為富文字</button>
+          <button id="gvm-mail-eml" class="gvm-btn-outline">下載 .eml</button>
+          <span class="gvm-copy-hint" id="gvm-mail-ready"></span>
         </div>
       </div>
     </div>
@@ -2143,7 +2185,14 @@
   var mpCand = $('gvm-mp-cand'), mpPicked = $('gvm-mp-picked');
   var maCat = $('gvm-ma-cat'), maSub = $('gvm-ma-sub'), maKw = $('gvm-ma-kw');
   var maSearchBtn = $('gvm-ma-search'), maCand = $('gvm-ma-cand'), maPicked = $('gvm-ma-picked');
-  var mcToggle = $('gvm-mc-toggle'), mcBody = $('gvm-mc-body');
+  var mpCount = $('gvm-mp-count'), maCount = $('gvm-ma-count');
+  var mpCandToggle = $('gvm-mp-cand-toggle'), maCandToggle = $('gvm-ma-cand-toggle');
+  var mcIntroCount = $('gvm-mc-intro-count'), mcRegen = $('gvm-mc-regen');
+  var mailSteps = $('gvm-mail-steps'), mailAutofillBtn = $('gvm-mail-autofill');
+  var mailReadyEl = $('gvm-mail-ready');
+  var currentMailScale = 1;
+  // 最近一次搜尋的候選，「換一篇」直接從這裡取下一個，不用叫使用者回候選清單找
+  var mailLastCand = { podcast: [], article: [] };
   var mcSub = $('gvm-mc-sub'), mcDate = $('gvm-mc-date'), mcGreet = $('gvm-mc-greet');
   var mcIntro = $('gvm-mc-intro'), mcOutro = $('gvm-mc-outro'), mcSign = $('gvm-mc-sign');
   var mailCopyBtn = $('gvm-mail-copy'), mailEmlBtn = $('gvm-mail-eml');
@@ -2175,6 +2224,69 @@
       .split('{{月日}}').join((d.getMonth() + 1) + '/' + d.getDate());
   }
   function pad2(n) { return String(n).padStart(2, '0'); }
+
+  // 前言的「換一版」。做法對齊遠見線上讀的「編者的話」：句子是固定的，變數一律
+  // 來自這期真的選到的內容（幾集、幾篇、涵蓋哪些分類、月份範圍），不憑空生成事實。
+  // 連接詞沿用使用者原本那封信的語氣，不是另外編一套腔調。
+  var mailIntroIdx = 0;
+
+  function mailMonthSpan() {
+    var months = [];
+    mailState.podcasts.forEach(function (p) {
+      var m = (p.d || '').slice(0, 7).replace('-', '/') || (p.y || '');
+      if (m) months.push(m);
+    });
+    mailState.articles.forEach(function (a) { if (a.y) months.push(a.y); });
+    if (!months.length) return null;
+    months.sort();
+    var lo = months[0], hi = months[months.length - 1];
+    var loM = parseInt(lo.split('/')[1], 10), hiM = parseInt(hi.split('/')[1], 10);
+    // 全部落在同一個月時不能說「橫跨」，措辭要跟著換
+    return lo === hi
+      ? { text: loM + ' 月', range: false }
+      : { text: loM + ' 月至 ' + hiM + ' 月', range: true };
+  }
+
+  function mailCategoryText() {
+    var seen = [], out = [];
+    mailState.articles.forEach(function (a) {
+      if (a.s && seen.indexOf(a.s) === -1) { seen.push(a.s); out.push(a.s); }
+    });
+    if (!out.length) return '';
+    return out.slice(0, 3).join('、');
+  }
+
+  var MAIL_INTRO_TEMPLATES = [
+    function (np, na, cats, span) {
+      var when = span ? (span.range ? '，時間橫跨 ' + span.text : '，皆為 ' + span.text + '的內容') : '';
+      return '在綠色永續浪潮中，跨界的觀點交流與布局，是學界、企業及醫界持續領先的關鍵。' +
+        '本期共好圈為您精選 ' + np + ' 集 Podcast 專訪與 ' + na + ' 篇永續報導' +
+        (cats ? '，聚焦' + cats : '') + when + '。' +
+        '不論是通勤時用聽的，還是喜歡靜靜閱讀，讓您隨時隨地，都能以最舒適的節奏掌握最新永續洞察。';
+    },
+    function (np, na, cats, span) {
+      return '各位夥伴在永續路上的每一步，都是彼此最好的參照。' +
+        '這一期整理了 ' + np + ' 段來自第一線的專訪，' +
+        '以及 ' + na + ' 篇' + (cats ? cats + '的' : '') + '報導' + (span ? '（' + span.text + '）' : '') + '，' +
+        '展現永續思維如何真正轉化為具體的發展新動能，而不只停留在報告書上。';
+    },
+    function (np, na, cats, span) {
+      var when = span ? (span.range ? '這些是 ' + span.text + '之間真實發生的進展，'
+                                    : '這些都是 ' + span.text + '剛發生的進展，') : '';
+      return '共好圈特別精選了會員夥伴的 ESG 實戰心法——' +
+        np + ' 集專訪聽見經營者怎麼想，' + na + ' 篇報導看見組織怎麼做' +
+        (cats ? '，主題集中在' + cats : '') + '。' + when +
+        '希望能為您這個月的永續佈局，帶來一點不一樣的參考。';
+    }
+  ];
+
+  function nextMailIntro() {
+    var np = mailState.podcasts.length, na = mailState.articles.length;
+    if (!np && !na) return MAIL_COPY_DEFAULTS.intro;
+    var tpl = MAIL_INTRO_TEMPLATES[mailIntroIdx % MAIL_INTRO_TEMPLATES.length];
+    mailIntroIdx++;
+    return tpl(np, na, mailCategoryText(), mailMonthSpan());
+  }
 
   function loadMailCopy() {
     var saved = loadJSON(MAIL_COPY_KEY, null) || {};
@@ -2280,6 +2392,7 @@
     var hits = mailPodcasts.filter(function (p) {
       return mailMatches((p.t || '') + ' ' + (p.ft || '') + ' ' + (p.es || ''), kw);
     }).sort(byDateDesc).slice(0, MAIL_CAND_LIMIT);
+    mailLastCand.podcast = hits;
     renderMailCand(mpCand, hits, 'podcast');
     setStatus(kw ? ('Podcast 找到 ' + hits.length + ' 集符合「' + kw + '」。')
                  : ('列出最新 ' + hits.length + ' 集 Podcast。'));
@@ -2293,12 +2406,19 @@
       else if (parent && mailParentOf(a.s) !== parent) return false;
       return mailMatches((a.t || '') + ' ' + (a.es || ''), kw);
     }).sort(byDateDesc).slice(0, MAIL_CAND_LIMIT);
+    mailLastCand.article = hits;
     renderMailCand(maCand, hits, 'article');
     var scope = sub || parent || '不限分類';
     setStatus('文章在「' + scope + '」找到 ' + hits.length + ' 篇' + (kw ? ('符合「' + kw + '」') : '') + '。');
   }
 
   function renderMailCand(host, items, kind) {
+    var toggle = kind === 'podcast' ? mpCandToggle : maCandToggle;
+    toggle.style.display = 'block';
+    // 選滿就把候選收起來。這一區有 30 筆、佔掉近半個螢幕，選完之後它只是擋路。
+    var full = (kind === 'podcast' ? mailState.podcasts : mailState.articles).length >= MAIL_PICK_COUNT;
+    host.style.display = full ? 'none' : '';
+    toggle.textContent = (full ? '▸' : '▾') + ' 候選清單';
     host.innerHTML = '';
     if (!items.length) {
       host.innerHTML = '<div class="gvm-mail-empty" style="padding:12px">沒有符合的結果，換個關鍵字或放寬分類。</div>';
@@ -2370,6 +2490,9 @@
   }
 
   function renderMailPicked() {
+    mpCount.textContent = mailState.podcasts.length + '/' + MAIL_PICK_COUNT;
+    maCount.textContent = mailState.articles.length + '/' + MAIL_PICK_COUNT;
+    updateMailReady();
     [['podcast', mpPicked, mailState.podcasts], ['article', maPicked, mailState.articles]]
       .forEach(function (cfg) {
         var kind = cfg[0], host = cfg[1], list = cfg[2];
@@ -2378,6 +2501,8 @@
           host.innerHTML = '<div class="gvm-mail-empty">還沒選，從上方候選清單按「＋ 加入」。最多 ' + MAIL_PICK_COUNT + ' 則。</div>';
           return;
         }
+        // 已選項目預設收成一行。展開的輸入框是「偶爾要改」的東西，讓它們一直佔著
+        // 位置，五則就把整個面板撐到快一個螢幕高。
         list.forEach(function (it, i) {
           var row = document.createElement('div');
           row.className = 'gvm-picked-row';
@@ -2386,22 +2511,42 @@
           no.textContent = pad2(i + 1);
           var main = document.createElement('div');
           main.className = 'gvm-picked-main';
-          var title = document.createElement('input');
-          title.type = 'text'; title.value = it.t;
-          title.addEventListener('input', function () { it.t = title.value; renderMailPreview(); });
-          main.appendChild(title);
-          if (kind === 'podcast') {
-            var ft = document.createElement('input');
-            ft.type = 'text'; ft.value = it.ft || ''; ft.placeholder = '來賓（ft.）';
-            ft.style.marginTop = '5px';
-            ft.addEventListener('input', function () { it.ft = ft.value; renderMailPreview(); });
-            main.appendChild(ft);
+
+          if (!it._open) {
+            var line = document.createElement('div');
+            line.className = 'gvm-cand-title';
+            line.style.cssText = 'padding-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            line.textContent = it.t;
+            var meta = kind === 'podcast'
+              ? [it.n, it.ft].filter(Boolean).join('・')
+              : [it.s, it.y].filter(Boolean).join('・');
+            if (meta) {
+              var tag = document.createElement('span');
+              tag.className = 'gvm-cand-meta';
+              tag.style.cssText = 'margin-left:8px;white-space:nowrap;';
+              tag.textContent = meta;
+              line.appendChild(tag);
+            }
+            main.appendChild(line);
           } else {
-            var sm = document.createElement('textarea');
-            sm.value = it.summary || ''; sm.placeholder = '預覽縮文';
-            sm.addEventListener('input', function () { it.summary = sm.value; renderMailPreview(); });
-            main.appendChild(sm);
+            var title = document.createElement('input');
+            title.type = 'text'; title.value = it.t;
+            title.addEventListener('input', function () { it.t = title.value; renderMailPreview(); });
+            main.appendChild(title);
+            if (kind === 'podcast') {
+              var ft = document.createElement('input');
+              ft.type = 'text'; ft.value = it.ft || ''; ft.placeholder = '來賓（ft.）';
+              ft.style.marginTop = '5px';
+              ft.addEventListener('input', function () { it.ft = ft.value; renderMailPreview(); });
+              main.appendChild(ft);
+            } else {
+              var sm = document.createElement('textarea');
+              sm.value = it.summary || ''; sm.placeholder = '預覽縮文';
+              sm.addEventListener('input', function () { it.summary = sm.value; renderMailPreview(); });
+              main.appendChild(sm);
+            }
           }
+
           var acts = document.createElement('div');
           acts.className = 'gvm-picked-actions';
           [['▲', -1], ['▼', 1]].forEach(function (m) {
@@ -2411,6 +2556,15 @@
             b.addEventListener('click', function () { moveMailItem(kind, i, m[1]); });
             acts.appendChild(b);
           });
+          var swap = document.createElement('button');
+          swap.type = 'button'; swap.className = 'gvm-mini'; swap.textContent = '換一篇';
+          swap.addEventListener('click', function () { swapMailItem(kind, i); });
+          acts.appendChild(swap);
+          var edit = document.createElement('button');
+          edit.type = 'button'; edit.className = 'gvm-mini';
+          edit.textContent = it._open ? '收合' : '編輯';
+          edit.addEventListener('click', function () { it._open = !it._open; renderMailPicked(); });
+          acts.appendChild(edit);
           var del = document.createElement('button');
           del.type = 'button'; del.className = 'gvm-mini'; del.textContent = '✕';
           del.addEventListener('click', function () { removeMailItem(kind, i); });
@@ -2485,8 +2639,8 @@
       '<div style="width:44px;height:2px;background:' + MC.accent + ';margin:16px auto 0;font-size:0;">&nbsp;</div>' +
       '</td></tr>';
   }
-  function mailSection(icon, label) {
-    return '<tr><td style="padding:32px 40px 0;">' +
+  function mailSection(icon, label, anchor) {
+    return '<tr' + (anchor ? ' id="' + anchor + '"' : '') + '><td style="padding:32px 40px 0;">' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
       '<td style="background:' + MC.tint + ';border-left:3px solid ' + MC.accent + ';padding:9px 14px;' +
       'font-family:' + MSANS + ';font-size:14px;font-weight:700;color:' + MC.deep + ';letter-spacing:.04em;">' +
@@ -2527,7 +2681,7 @@
     var d = mailDate();
     var signDate = pad2(d.getMonth() + 1) + '.' + pad2(d.getDate());
     var outro = esc(mailFillVars(mcOutro.value)).split('\n').join('<br>');
-    return '<tr><td style="padding:34px 40px 0;font-family:' + MSANS + ';font-size:13.5px;line-height:1.95;color:' + MC.ink + ';">' + outro + '</td></tr>' +
+    return '<tr id="sec-end"><td style="padding:34px 40px 0;font-family:' + MSANS + ';font-size:13.5px;line-height:1.95;color:' + MC.ink + ';">' + outro + '</td></tr>' +
       '<tr><td style="padding:26px 40px 32px;">' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
       '<tr><td style="border-top:1px solid ' + MC.line + ';padding-top:18px;" align="right">' +
@@ -2542,12 +2696,12 @@
       '<div style="font-weight:700;padding-bottom:10px;">' + esc(mailFillVars(mcGreet.value)) + '</div>' +
       esc(mailFillVars(mcIntro.value)).split('\n').join('<br>') + '</td></tr>';
     if (mailState.podcasts.length) {
-      body += mailSection('🎧', '本月熱門 Podcast 專訪') +
+      body += mailSection('🎧', '本月熱門 Podcast 專訪', 'sec-pod') +
         '<tr><td style="padding:4px 40px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
         mailState.podcasts.map(mailPodRow).join('') + '</table></td></tr>';
     }
     if (mailState.articles.length) {
-      body += mailSection('💡', '本月精選永續文章') +
+      body += mailSection('💡', '本月精選永續文章', 'sec-art') +
         '<tr><td style="padding:4px 40px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
         mailState.articles.map(mailArtRow).join('') + '</table></td></tr>';
     }
@@ -2568,6 +2722,7 @@
 
   function renderMailPreview() {
     saveMailCopy();
+    mcIntroCount.textContent = mcIntro.value.length + ' 字';
     var doc = mailIframe.contentDocument || mailIframe.contentWindow.document;
     doc.open(); doc.write(buildMailHtml()); doc.close();
     // iframe 高度跟著內容長，否則會出現雙層捲軸
@@ -2580,13 +2735,19 @@
     var doc = mailIframe.contentDocument;
     if (!doc || !doc.body) return;
     var scaleBox = $('gvm-mail-scale');
+    // 先把縮放容器塌掉再量可用寬度。它上一輪被寫死的寬度會把外層一起撐開，
+    // 不歸零就會量到自己造成的寬度、算出永遠是 1 的縮放比——視窗從寬拉到窄時
+    // 就會看到信件溢出版面。
+    scaleBox.style.width = '0px';
     var avail = mailPreviewWrap.clientWidth - 28;   // 扣掉 .gvm-mail-frame 左右內距
     var scale = Math.min(1, avail / 600);
+    currentMailScale = scale;
     var h = doc.body.scrollHeight;
     mailIframe.style.height = h + 'px';
     mailIframe.style.transform = scale < 1 ? 'scale(' + scale + ')' : 'none';
     scaleBox.style.height = Math.ceil(h * scale) + 'px';
-    scaleBox.style.width = Math.ceil(600 * scale) + 'px';
+    // 不縮放時就別留下寫死的寬度，否則下一次量測會被自己上一輪的值撐開
+    scaleBox.style.width = scale < 1 ? Math.ceil(600 * scale) + 'px' : 'auto';
   }
   window.addEventListener('resize', function () {
     if (currentMode === 'mail') fitMailPreview();
@@ -2687,6 +2848,131 @@
     showButtonFeedback(mailEmlBtn, '已下載');
   }
 
+  // ---- 步驟分頁與預覽跟隨 ------------------------------------------------------
+  var MAIL_STEP_ANCHOR = { '1': null, '2': 'sec-pod', '3': 'sec-art', '4': 'sec-end' };
+  var currentMailStep = '1';
+
+  function goMailStep(step) {
+    currentMailStep = step;
+    [].forEach.call(mailSteps.querySelectorAll('.gvm-step'), function (b) {
+      b.classList.toggle('active', b.dataset.step === step);
+    });
+    [].forEach.call(document.querySelectorAll('.gvm-step-panel'), function (pn) {
+      pn.style.display = pn.dataset.step === step ? '' : 'none';
+    });
+    fitMailPreview();
+    scrollPreviewToStep(step);
+  }
+
+  // 編輯哪一段就把預覽捲到哪一段。iframe 是縮放過的，所以位移要乘上縮放比。
+  function scrollPreviewToStep(step) {
+    var anchor = MAIL_STEP_ANCHOR[step];
+    var doc = mailIframe.contentDocument;
+    if (!doc) return;
+    if (!anchor) { mailPreviewWrap.scrollTop = 0; return; }
+    var el = doc.getElementById(anchor);
+    if (!el) { mailPreviewWrap.scrollTop = 0; return; }
+    mailPreviewWrap.scrollTop = Math.max(0, el.offsetTop * currentMailScale - 12);
+  }
+
+  function updateMailReady() {
+    var missing = [];
+    if (mailState.podcasts.length < MAIL_PICK_COUNT) missing.push('Podcast 還差 ' + (MAIL_PICK_COUNT - mailState.podcasts.length) + ' 則');
+    if (mailState.articles.length < MAIL_PICK_COUNT) missing.push('文章還差 ' + (MAIL_PICK_COUNT - mailState.articles.length) + ' 篇');
+    if (!mcSign.value.trim()) missing.push('署名未填');
+    mailReadyEl.textContent = missing.length ? '尚未完成：' + missing.join('、') : '內容齊全，可以輸出了';
+    mailReadyEl.style.color = missing.length ? '' : 'var(--accent)';
+  }
+
+  // ---- 一鍵生成初稿 ------------------------------------------------------------
+  // 選文策略對齊使用者實際的節奏：他上一期那封信的五篇橫跨 4–6 月，不是抓當月最新，
+  // 代表看的是「這一季有什麼值得講」。所以文章從最近三個月各拉幾篇，而不是取最新五筆。
+  function pickAcrossRecentMonths(pool, need, monthsBack) {
+    var months = [];
+    pool.forEach(function (a) { if (a.y && months.indexOf(a.y) === -1) months.push(a.y); });
+    months.sort().reverse();
+    months = months.slice(0, monthsBack);
+    var out = [];
+    for (var round = 0; out.length < need && round < 20; round++) {
+      for (var i = 0; i < months.length && out.length < need; i++) {
+        var inMonth = pool.filter(function (a) { return a.y === months[i]; });
+        if (inMonth[round]) out.push(inMonth[round]);
+      }
+      if (!months.length) break;
+    }
+    return out.slice(0, need);
+  }
+
+  async function autofillMailDraft() {
+    if ((mailState.podcasts.length || mailState.articles.length) &&
+        !window.confirm('一鍵生成會覆蓋目前已選的內容，確定要重新產生嗎？')) return;
+    mailState.podcasts = [];
+    mailState.articles = [];
+
+    var pods = mailPodcasts.slice().sort(byDateDesc).slice(0, MAIL_PICK_COUNT);
+    mailLastCand.podcast = mailPodcasts.slice().sort(byDateDesc).slice(0, MAIL_CAND_LIMIT);
+    pods.forEach(function (p) {
+      mailState.podcasts.push({ i: p.i, t: p.t, ft: p.ft, url: p.url, n: p.n, d: p.d, y: p.y });
+    });
+
+    var parent = maCat.value;
+    var pool = mailArticles.filter(function (a) {
+      return !parent || mailParentOf(a.s) === parent;
+    }).sort(byDateDesc);
+    mailLastCand.article = pool.slice(0, MAIL_CAND_LIMIT);
+    var picked = pickAcrossRecentMonths(pool, MAIL_PICK_COUNT, 3);
+    var years = [];
+    picked.forEach(function (a) {
+      var y = (a.y || '').split('/')[0];
+      if (y && years.indexOf(y) === -1) years.push(y);
+    });
+    setStatus('生成初稿中…');
+    await ensureMailSummaries(years);
+    picked.forEach(function (a) {
+      mailState.articles.push({
+        i: a.i, t: a.t, url: a.url, s: a.s, y: a.y,
+        img: a.img || '', summary: mailSummaryFor(a)
+      });
+    });
+
+    mailIntroIdx = 0;
+    mcIntro.value = nextMailIntro();
+    renderMailPicked();
+    renderMailPreview();
+    setStatus('初稿已生成：' + mailState.podcasts.length + ' 集 Podcast、' +
+      mailState.articles.length + ' 篇文章。不滿意的逐則按「換一篇」即可。');
+    showButtonFeedback(mailAutofillBtn, '已生成', 3);
+  }
+
+  // 換一篇：從最近一次的候選裡取下一個還沒被選的，就地替換
+  function swapMailItem(kind, idx) {
+    var list = kind === 'podcast' ? mailState.podcasts : mailState.articles;
+    var cand = mailLastCand[kind];
+    if (!cand.length) { setStatus('請先搜尋一次，才有候選可以替換。', true); return; }
+    var usedIds = {};
+    list.forEach(function (x, i) { if (i !== idx) usedIds[x.i] = true; });
+    var curPos = -1;
+    for (var i = 0; i < cand.length; i++) { if (cand[i].i === list[idx].i) { curPos = i; break; } }
+    var next = null;
+    for (var step = 1; step <= cand.length; step++) {
+      var c = cand[(curPos + step + cand.length) % cand.length];
+      if (!usedIds[c.i] && c.i !== list[idx].i) { next = c; break; }
+    }
+    if (!next) { setStatus('候選清單裡沒有其他可替換的項目了。', true); return; }
+    if (kind === 'podcast') {
+      list[idx] = { i: next.i, t: next.t, ft: next.ft, url: next.url, n: next.n, d: next.d, y: next.y };
+      finishMailChange();
+    } else {
+      ensureMailSummaries([(next.y || '').split('/')[0]]).then(function () {
+        list[idx] = {
+          i: next.i, t: next.t, url: next.url, s: next.s, y: next.y,
+          img: next.img || '', summary: mailSummaryFor(next)
+        };
+        finishMailChange();
+      });
+    }
+  }
+
   // ---- 模式切換 --------------------------------------------------------------
   var currentMode = 'curation';
 
@@ -2707,6 +2993,7 @@
     await ensureMailData();
     renderMailPicked();
     renderMailPreview();
+    goMailStep('1');
   }
 
   function leaveMailMode() {
@@ -2733,9 +3020,17 @@
   mcSign.placeholder = '填一次就會記住，例如：怡儒Annie';
   mcSub.placeholder = '例如：每月會員精選（可用 {{日期}} 等變數）';
 
-  mcToggle.addEventListener('click', function () {
-    var open = mcBody.classList.toggle('open');
-    mcToggle.textContent = (open ? '▾' : '▸') + ' 信件文案・開頭與結尾';
+  [[mpCandToggle, mpCand], [maCandToggle, maCand]].forEach(function (pair) {
+    pair[0].addEventListener('click', function () {
+      var hidden = pair[1].style.display === 'none';
+      pair[1].style.display = hidden ? '' : 'none';
+      pair[0].textContent = (hidden ? '▾' : '▸') + ' 候選清單';
+    });
+  });
+  mcRegen.addEventListener('click', function () {
+    mcIntro.value = nextMailIntro();
+    renderMailPreview();
+    showButtonFeedback(mcRegen, '已換一版');
   });
   mpSearchBtn.addEventListener('click', searchMailPodcasts);
   mpKw.addEventListener('keydown', function (e) { if (e.key === 'Enter') searchMailPodcasts(); });
@@ -2747,6 +3042,12 @@
     el.addEventListener('input', renderMailPreview);
   });
   mcDate.addEventListener('change', renderMailPreview);
+  mailSteps.addEventListener('click', function (e) {
+    var b = e.target.closest('.gvm-step');
+    if (b) goMailStep(b.dataset.step);
+  });
+  mailAutofillBtn.addEventListener('click', autofillMailDraft);
+  mcSign.addEventListener('input', updateMailReady);
   mailCopyBtn.addEventListener('click', copyMailRichText);
   mailEmlBtn.addEventListener('click', downloadMailEml);
   sourceMailBtn.addEventListener('click', enterMailMode);
