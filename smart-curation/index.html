@@ -193,6 +193,50 @@
   .gvm-copy-row{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
   .gvm-copy-hint{ font-size:11.5px; color:var(--text-soft); }
 
+  /* ── 會員溝通信件模式 ───────────────────────────────────────────────── */
+  .gvm-mail-search{ display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; }
+  .gvm-mail-search .gvm-field{ flex:1 1 130px; min-width:0; }
+  .gvm-mail-search select{ width:100%; }
+  .gvm-cand{ margin-top:12px; border:1px solid var(--field-border); border-radius:4px; max-height:250px; overflow-y:auto; }
+  .gvm-cand:empty{ display:none; }
+  .gvm-cand-row{ display:flex; gap:10px; align-items:flex-start; padding:9px 11px; border-bottom:1px solid var(--line); }
+  .gvm-cand-row:last-child{ border-bottom:none; }
+  .gvm-cand-row.picked{ opacity:.45; }
+  .gvm-cand-main{ flex:1; min-width:0; }
+  .gvm-cand-title{ font-size:13px; line-height:1.5; color:var(--text); }
+  .gvm-cand-meta{ font-size:11px; color:var(--text-soft); margin-top:3px; }
+  .gvm-mini{
+    border:1px solid var(--field-border); background:#fff; color:var(--accent);
+    font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:3px; cursor:pointer;
+    flex-shrink:0; font-family:inherit;
+  }
+  .gvm-mini:hover:not(:disabled){ border-color:var(--accent); background:#f6faf8; }
+  .gvm-mini:disabled{ opacity:.4; cursor:default; }
+  .gvm-picked{ margin-top:12px; }
+  .gvm-picked-row{
+    display:flex; gap:8px; align-items:flex-start; padding:9px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .gvm-picked-row:last-child{ border-bottom:none; }
+  .gvm-picked-no{ font-weight:700; color:var(--accent); font-size:12.5px; width:20px; flex-shrink:0; padding-top:2px; }
+  .gvm-picked-main{ flex:1; min-width:0; }
+  .gvm-picked-main input, .gvm-picked-main textarea{
+    width:100%; padding:6px 8px; border:1px solid var(--field-border); border-radius:3px;
+    font-family:inherit; font-size:12.5px; color:var(--text); background:#fff; line-height:1.6;
+  }
+  .gvm-picked-main textarea{ resize:vertical; min-height:52px; margin-top:5px; }
+  .gvm-picked-actions{ display:flex; gap:4px; flex-shrink:0; }
+  .gvm-mail-empty{ font-size:12px; color:var(--text-soft); padding:10px 0; }
+  .gvm-mail-frame{ background:#f4f6f5; padding:14px; max-height:78vh; overflow:auto; }
+  /* 信件固定 600px 寬，預覽欄在手機上只有 3 百多 px。等比縮小整份預覽，
+     比讓使用者左右拖看半封信合理。 */
+  #gvm-mail-scale{ overflow:hidden; }
+  /* grid item 預設 min-width:auto，不會縮到比內容小——固定 600px 的信件會直接
+     把整欄撐開，量到的「可用寬度」就永遠是 600，縮放算出來自然是 1。 */
+  .gvm-preview-wrap{ min-width:0; }
+  .gvm-mail-frame{ min-width:0; }
+  .gvm-mail-frame iframe{ width:600px; border:0; display:block; background:#fff; transform-origin:top left; }
+
   .gvm-preview-wrap{ position:sticky; top:20px; }
   @media (max-width:900px){ .gvm-preview-wrap{ position:static; } }
   .gvm-preview-frame{ background:var(--paper); border:1px solid var(--line); border-radius:6px; overflow:hidden; }
@@ -275,6 +319,9 @@
       <button type="button" class="gvm-source-btn" id="gvm-source-esg" data-source="esg">
         <span class="dot"></span>ESG遠見共好圈
       </button>
+      <button type="button" class="gvm-source-btn" id="gvm-source-mail" data-source="mail">
+        <span class="dot"></span>會員溝通信件
+      </button>
     </div>
     <div class="gvm-source-caption" id="gvm-source-caption"></div>
   </div>
@@ -288,6 +335,7 @@
   <div class="gvm-layout">
     <!-- LEFT: editing workspace -->
     <div>
+      <div id="gvm-curation-workspace">
       <div class="gvm-panel">
         <div class="gvm-panel-label">1・搜尋設定</div>
         <div class="gvm-form">
@@ -402,6 +450,84 @@
           <span class="gvm-copy-hint">下載後可直接開啟或轉發給同事派發</span>
         </div>
       </div>
+      </div><!-- /gvm-curation-workspace -->
+
+      <!-- 會員溝通信件模式：Podcast 與文章各搜各的，各挑 5 則 -->
+      <div id="gvm-mail-workspace" style="display:none">
+        <div class="gvm-panel">
+          <div class="gvm-panel-label">1・Podcast 專訪</div>
+          <div class="gvm-mail-search">
+            <div class="gvm-field" style="flex:2 1 200px">
+              <label for="gvm-mp-kw">關鍵字（留空＝依日期列出最新集數）</label>
+              <input id="gvm-mp-kw" type="text" placeholder="例如：金融、教育、循環" autocomplete="off">
+            </div>
+            <button id="gvm-mp-search" class="gvm-btn">搜尋</button>
+          </div>
+          <div id="gvm-mp-cand" class="gvm-cand"></div>
+          <div class="gvm-panel-label" style="margin:18px 0 0">已選（拖不動就用箭頭調順序）</div>
+          <div id="gvm-mp-picked" class="gvm-picked"></div>
+        </div>
+
+        <div class="gvm-panel">
+          <div class="gvm-panel-label">2・永續文章</div>
+          <div class="gvm-mail-search">
+            <div class="gvm-field">
+              <label for="gvm-ma-cat">分類</label>
+              <select id="gvm-ma-cat"></select>
+            </div>
+            <div class="gvm-field">
+              <label for="gvm-ma-sub">子分類</label>
+              <select id="gvm-ma-sub"></select>
+            </div>
+            <div class="gvm-field" style="flex:2 1 160px">
+              <label for="gvm-ma-kw">關鍵字（可留空）</label>
+              <input id="gvm-ma-kw" type="text" placeholder="例如：循環經濟、包裝" autocomplete="off">
+            </div>
+            <button id="gvm-ma-search" class="gvm-btn">搜尋</button>
+          </div>
+          <div id="gvm-ma-cand" class="gvm-cand"></div>
+          <div class="gvm-panel-label" style="margin:18px 0 0">已選（標題與縮文都可以直接改）</div>
+          <div id="gvm-ma-picked" class="gvm-picked"></div>
+        </div>
+
+        <div class="gvm-panel">
+          <button id="gvm-mc-toggle" class="gvm-adv-toggle">▸ 信件文案・開頭與結尾</button>
+          <div id="gvm-mc-body" class="gvm-adv-body">
+            <div class="gvm-adv-grid">
+              <div class="gvm-field">
+                <label for="gvm-mc-sub">刊頭副標</label>
+                <input id="gvm-mc-sub" type="text">
+              </div>
+              <div class="gvm-field">
+                <label for="gvm-mc-date">寄送日期（署名日期與 {{月日}} 依這天代入）</label>
+                <input id="gvm-mc-date" type="date">
+              </div>
+            </div>
+            <div class="gvm-field" style="margin-top:10px">
+              <label for="gvm-mc-greet">問候語</label>
+              <input id="gvm-mc-greet" type="text">
+            </div>
+            <div class="gvm-field" style="margin-top:10px">
+              <label for="gvm-mc-intro">前言</label>
+              <textarea id="gvm-mc-intro" class="gvm-intro-edit" style="min-height:96px"></textarea>
+            </div>
+            <div class="gvm-field" style="margin-top:10px">
+              <label for="gvm-mc-outro">結尾</label>
+              <textarea id="gvm-mc-outro" class="gvm-intro-edit" style="min-height:70px"></textarea>
+            </div>
+            <div class="gvm-field" style="margin-top:10px">
+              <label for="gvm-mc-sign">署名</label>
+              <input id="gvm-mc-sign" type="text">
+            </div>
+            <div class="gvm-copy-hint" style="margin-top:6px">文案記在這台電腦，下次打開自動帶回。可用 {{星期}}、{{日期}}、{{月日}}。</div>
+          </div>
+          <div class="gvm-copy-row">
+            <button id="gvm-mail-copy" class="gvm-btn" style="align-self:center">複製為富文字</button>
+            <button id="gvm-mail-eml" class="gvm-btn-outline">下載 .eml</button>
+            <span class="gvm-copy-hint">複製後直接貼進 Outlook；.eml 雙擊即開成待寄郵件</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- RIGHT: live preview -->
@@ -410,6 +536,11 @@
         <div class="gvm-preview-bar">即時預覽</div>
         <div id="gvm-preview-body" class="gvm-preview-body">
           <div class="gvm-pv-empty">輸入關鍵字並按「搜尋」後，這裡會即時顯示最終畫面</div>
+        </div>
+        <!-- 信件預覽用 iframe：信件是 table + 行內樣式的獨立文件，直接塞進本頁會被
+             頁面既有的 CSS 汙染，看到的就不是收件者真正會看到的樣子。 -->
+        <div id="gvm-mail-preview" class="gvm-mail-frame" style="display:none">
+          <div id="gvm-mail-scale"><iframe id="gvm-mail-iframe" title="信件預覽"></iframe></div>
         </div>
       </div>
     </div>
@@ -519,6 +650,7 @@
   var focusYearSelect = $('gvm-focus-year');
   var sourceGvmBtn = $('gvm-source-gvm');
   var sourceEsgBtn = $('gvm-source-esg');
+  var sourceMailBtn = $('gvm-source-mail');
   var sourceCaptionEl = $('gvm-source-caption');
   var focusPanelLabelEl = $('gvm-focus-panel-label');
 
@@ -1812,8 +1944,7 @@
   function updateSourceUI() {
     var cfg = sourceConfig();
     document.body.classList.toggle('source-esg', currentSource === 'esg');
-    sourceGvmBtn.classList.toggle('active', currentSource === 'gvm');
-    sourceEsgBtn.classList.toggle('active', currentSource === 'esg');
+    updateSourceButtons();
     keywordInput.placeholder = cfg.keywordPlaceholder;
     focusPanelLabelEl.textContent = '4・國際焦點（自動帶入，' + cfg.label + '真實報導）';
     utmSectionEl.style.display = cfg.useUtm ? 'block' : 'none';
@@ -1877,6 +2008,12 @@
   }
 
   function switchSource(source) {
+    // 從信件模式切回策展：即使點的是同一個資料庫，也要把畫面切回來
+    if (currentMode === 'mail') {
+      leaveMailMode();
+      updateSourceButtons();
+      if (source === currentSource) { renderPreview(); return; }
+    }
     if (source === currentSource) return;
     // 已經選好文章、編好引言時，換資料庫等於整份重來——先確認過再清空，避免手滑點掉一整份工作
     if (state.articles.length) {
@@ -1977,6 +2114,642 @@
     if (draft) restoreDraft(draft);
   });
   $('gvm-draft-discard').addEventListener('click', function () { clearDraft(); });
+
+  // ==== 會員溝通信件模式 =======================================================
+  // 與策展模式的差異，不只是輸出格式：
+  //   1. Podcast 與文章「各搜各的」——實際選材上這兩區本來就不同主題，共用一個
+  //      關鍵字會逼使用者遷就工具。
+  //   2. 文章側先選分類再下關鍵字。分類用官網上方選單的「父分類」，但索引的 s
+  //      欄位存的是子分類，所以要靠索引裡的 category_tree 往上收合。
+  //   3. 產出是 email HTML（table + 行內樣式），不是頁面上那套 CSS 版型。
+
+  var MAIL_PODCAST_URL = 'data/podcast_index.json';
+  var MAIL_ARTICLE_URL = 'data/esg_curation_index.json';
+  var MAIL_SUMMARIES_DIR = 'data/esg_summaries/';
+  var MAIL_PICK_COUNT = 5;
+  var MAIL_CAND_LIMIT = 30;
+
+  var mailPodcasts = null;
+  var mailArticles = null;
+  var mailCatTree = {};
+  // 摘要快取跟策展模式分開放。兩邊都用「年份」當 key，共用會讓 ESG 的 2026 蓋掉
+  // 雜誌本誌的 2026，是很難查的那種錯。
+  var mailSummaries = {};
+  var mailLoaded = false;
+
+  var mailState = { podcasts: [], articles: [] };
+
+  var mpKw = $('gvm-mp-kw'), mpSearchBtn = $('gvm-mp-search');
+  var mpCand = $('gvm-mp-cand'), mpPicked = $('gvm-mp-picked');
+  var maCat = $('gvm-ma-cat'), maSub = $('gvm-ma-sub'), maKw = $('gvm-ma-kw');
+  var maSearchBtn = $('gvm-ma-search'), maCand = $('gvm-ma-cand'), maPicked = $('gvm-ma-picked');
+  var mcToggle = $('gvm-mc-toggle'), mcBody = $('gvm-mc-body');
+  var mcSub = $('gvm-mc-sub'), mcDate = $('gvm-mc-date'), mcGreet = $('gvm-mc-greet');
+  var mcIntro = $('gvm-mc-intro'), mcOutro = $('gvm-mc-outro'), mcSign = $('gvm-mc-sign');
+  var mailCopyBtn = $('gvm-mail-copy'), mailEmlBtn = $('gvm-mail-eml');
+  var mailWorkspace = $('gvm-mail-workspace'), curationWorkspace = $('gvm-curation-workspace');
+  var mailPreviewWrap = $('gvm-mail-preview'), mailIframe = $('gvm-mail-iframe');
+
+  var MAIL_COPY_KEY = 'gvm_mail_copy_v1';
+  var MAIL_COPY_DEFAULTS = {
+    sub: '每月會員精選',
+    greet: '親愛的共好圈會員先進  好',
+    intro: '在綠色永續浪潮中，跨界的觀點交流與布局，是學界、企業及醫界持續領先的關鍵，' +
+           '共好圈特別精選了會員夥伴的 ESG 實戰心法，展現如何成功將永續思維轉化為具體的發展新動能，' +
+           '不論是通勤時用聽的，還是喜歡靜靜閱讀，讓您隨時隨地，都能以最舒適的節奏掌握最新永續洞察。',
+    outro: '在永續的路上，感謝有您並肩同行，期待下一期，一起為共好圈會員帶來全新的永續啟發！\n' +
+           '若有任何疑問或需協助之處，歡迎隨時聯繫，謝謝。',
+    sign: ''
+  };
+
+  function mailDate() {
+    var v = mcDate.value;
+    var d = v ? new Date(v + 'T00:00:00') : new Date();
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+  function mailFillVars(t) {
+    var d = mailDate();
+    return (t || '')
+      .split('{{星期}}').join('週' + '日一二三四五六'.charAt(d.getDay()))
+      .split('{{日期}}').join(d.getFullYear() + '/' + pad2(d.getMonth() + 1) + '/' + pad2(d.getDate()))
+      .split('{{月日}}').join((d.getMonth() + 1) + '/' + d.getDate());
+  }
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function loadMailCopy() {
+    var saved = loadJSON(MAIL_COPY_KEY, null) || {};
+    mcSub.value   = saved.sub   != null ? saved.sub   : MAIL_COPY_DEFAULTS.sub;
+    mcGreet.value = saved.greet != null ? saved.greet : MAIL_COPY_DEFAULTS.greet;
+    mcIntro.value = saved.intro != null ? saved.intro : MAIL_COPY_DEFAULTS.intro;
+    mcOutro.value = saved.outro != null ? saved.outro : MAIL_COPY_DEFAULTS.outro;
+    mcSign.value  = saved.sign  != null ? saved.sign  : MAIL_COPY_DEFAULTS.sign;
+  }
+  function saveMailCopy() {
+    saveJSON(MAIL_COPY_KEY, {
+      sub: mcSub.value, greet: mcGreet.value, intro: mcIntro.value,
+      outro: mcOutro.value, sign: mcSign.value
+    });
+  }
+
+  // ---- 載入資料 --------------------------------------------------------------
+  async function ensureMailData() {
+    if (mailLoaded) return;
+    setStatus('載入 Podcast 與文章資料庫…');
+    var res = await Promise.all([fetch(MAIL_PODCAST_URL), fetch(MAIL_ARTICLE_URL)]);
+    var pod = await res[0].json();
+    var art = await res[1].json();
+    mailPodcasts = pod.episodes || [];
+    mailArticles = art.articles || [];
+    mailCatTree = art.category_tree || {};
+    mailLoaded = true;
+    populateMailCategories();
+    setStatus('Podcast ' + mailPodcasts.length + ' 集、文章 ' + mailArticles.length + ' 篇，可開始挑選。');
+  }
+
+  function ensureMailSummaries(years) {
+    var todo = years.filter(function (y) { return y && !mailSummaries[y]; });
+    return Promise.all(todo.map(function (y) {
+      return fetch(MAIL_SUMMARIES_DIR + y + '.json')
+        .then(function (r) { return r.ok ? r.json() : {}; })
+        .then(function (m) { mailSummaries[y] = m; })
+        .catch(function () { mailSummaries[y] = {}; });
+    }));
+  }
+  function mailSummaryFor(a) {
+    var y = (a.y || '').split('/')[0];
+    var m = mailSummaries[y];
+    return (m && m[a.i]) || a.es || '';
+  }
+
+  // ---- 分類選單（父 → 子）-----------------------------------------------------
+  var MAIL_DEFAULT_PARENT = '實踐案例';
+
+  function mailParentOf(leaf) { return mailCatTree[leaf] || leaf; }
+
+  function populateMailCategories() {
+    var counts = {};
+    mailArticles.forEach(function (a) {
+      var p = mailParentOf(a.s);
+      counts[p] = (counts[p] || 0) + 1;
+    });
+    var parents = Object.keys(counts).sort(function (x, y) { return counts[y] - counts[x]; });
+    maCat.innerHTML = '';
+    var all = document.createElement('option');
+    all.value = ''; all.textContent = '不限分類（' + mailArticles.length + '）';
+    maCat.appendChild(all);
+    parents.forEach(function (p) {
+      var o = document.createElement('option');
+      o.value = p; o.textContent = p + '（' + counts[p] + '）';
+      maCat.appendChild(o);
+    });
+    maCat.value = counts[MAIL_DEFAULT_PARENT] ? MAIL_DEFAULT_PARENT : '';
+    populateMailSubCategories();
+  }
+
+  function populateMailSubCategories() {
+    var parent = maCat.value;
+    var counts = {};
+    mailArticles.forEach(function (a) {
+      if (parent && mailParentOf(a.s) !== parent) return;
+      counts[a.s] = (counts[a.s] || 0) + 1;
+    });
+    var subs = Object.keys(counts).sort(function (x, y) { return counts[y] - counts[x]; });
+    maSub.innerHTML = '';
+    var all = document.createElement('option');
+    all.value = ''; all.textContent = '全部子分類';
+    maSub.appendChild(all);
+    subs.forEach(function (sname) {
+      var o = document.createElement('option');
+      o.value = sname; o.textContent = sname + '（' + counts[sname] + '）';
+      maSub.appendChild(o);
+    });
+    // 只有一個子分類、而且就等於父分類本身時（例如專家觀點）沒有細分的意義
+    maSub.disabled = subs.length <= 1 && subs[0] === parent;
+  }
+
+  // ---- 搜尋 ------------------------------------------------------------------
+  function mailMatches(text, kw) {
+    if (!kw) return true;
+    var lower = text.toLowerCase();
+    return expandTerms(kw).some(function (t) { return lower.indexOf(t.toLowerCase()) !== -1; });
+  }
+  function byDateDesc(a, b) { return (b.d || b.y || '').localeCompare(a.d || a.y || ''); }
+
+  function searchMailPodcasts() {
+    var kw = mpKw.value.trim();
+    var hits = mailPodcasts.filter(function (p) {
+      return mailMatches((p.t || '') + ' ' + (p.ft || '') + ' ' + (p.es || ''), kw);
+    }).sort(byDateDesc).slice(0, MAIL_CAND_LIMIT);
+    renderMailCand(mpCand, hits, 'podcast');
+    setStatus(kw ? ('Podcast 找到 ' + hits.length + ' 集符合「' + kw + '」。')
+                 : ('列出最新 ' + hits.length + ' 集 Podcast。'));
+  }
+
+  function searchMailArticles() {
+    var kw = maKw.value.trim();
+    var parent = maCat.value, sub = maSub.value;
+    var hits = mailArticles.filter(function (a) {
+      if (sub) { if (a.s !== sub) return false; }
+      else if (parent && mailParentOf(a.s) !== parent) return false;
+      return mailMatches((a.t || '') + ' ' + (a.es || ''), kw);
+    }).sort(byDateDesc).slice(0, MAIL_CAND_LIMIT);
+    renderMailCand(maCand, hits, 'article');
+    var scope = sub || parent || '不限分類';
+    setStatus('文章在「' + scope + '」找到 ' + hits.length + ' 篇' + (kw ? ('符合「' + kw + '」') : '') + '。');
+  }
+
+  function renderMailCand(host, items, kind) {
+    host.innerHTML = '';
+    if (!items.length) {
+      host.innerHTML = '<div class="gvm-mail-empty" style="padding:12px">沒有符合的結果，換個關鍵字或放寬分類。</div>';
+      return;
+    }
+    var chosen = kind === 'podcast' ? mailState.podcasts : mailState.articles;
+    var chosenIds = {};
+    chosen.forEach(function (x) { chosenIds[x.i] = true; });
+    items.forEach(function (it) {
+      var row = document.createElement('div');
+      row.className = 'gvm-cand-row' + (chosenIds[it.i] ? ' picked' : '');
+      var main = document.createElement('div');
+      main.className = 'gvm-cand-main';
+      var t = document.createElement('div');
+      t.className = 'gvm-cand-title';
+      t.textContent = it.t;
+      var meta = document.createElement('div');
+      meta.className = 'gvm-cand-meta';
+      meta.textContent = kind === 'podcast'
+        ? [it.n, it.d || it.y, it.ft].filter(Boolean).join('・')
+        : [it.s, it.y].filter(Boolean).join('・');
+      main.appendChild(t); main.appendChild(meta);
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'gvm-mini';
+      btn.textContent = chosenIds[it.i] ? '已選' : '＋ 加入';
+      btn.disabled = !!chosenIds[it.i] || chosen.length >= MAIL_PICK_COUNT;
+      btn.addEventListener('click', function () { addMailItem(kind, it); });
+      row.appendChild(main); row.appendChild(btn);
+      host.appendChild(row);
+    });
+  }
+
+  // ---- 已選清單 --------------------------------------------------------------
+  function addMailItem(kind, item) {
+    var list = kind === 'podcast' ? mailState.podcasts : mailState.articles;
+    if (list.length >= MAIL_PICK_COUNT) return;
+    if (list.some(function (x) { return x.i === item.i; })) return;
+    if (kind === 'podcast') {
+      list.push({ i: item.i, t: item.t, ft: item.ft, url: item.url, n: item.n, d: item.d, y: item.y });
+      finishMailChange();
+    } else {
+      var year = (item.y || '').split('/')[0];
+      ensureMailSummaries([year]).then(function () {
+        list.push({
+          i: item.i, t: item.t, url: item.url, s: item.s, y: item.y,
+          img: item.img || '', summary: mailSummaryFor(item)
+        });
+        finishMailChange();
+      });
+    }
+  }
+  function removeMailItem(kind, idx) {
+    (kind === 'podcast' ? mailState.podcasts : mailState.articles).splice(idx, 1);
+    finishMailChange();
+  }
+  function moveMailItem(kind, idx, dir) {
+    var list = kind === 'podcast' ? mailState.podcasts : mailState.articles;
+    var to = idx + dir;
+    if (to < 0 || to >= list.length) return;
+    var tmp = list[idx]; list[idx] = list[to]; list[to] = tmp;
+    finishMailChange();
+  }
+  function finishMailChange() {
+    renderMailPicked();
+    renderMailPreview();
+    // 候選清單要重畫，「已選 / 加入」的狀態才會跟著更新
+    if (mpCand.children.length) searchMailPodcasts();
+    if (maCand.children.length) searchMailArticles();
+  }
+
+  function renderMailPicked() {
+    [['podcast', mpPicked, mailState.podcasts], ['article', maPicked, mailState.articles]]
+      .forEach(function (cfg) {
+        var kind = cfg[0], host = cfg[1], list = cfg[2];
+        host.innerHTML = '';
+        if (!list.length) {
+          host.innerHTML = '<div class="gvm-mail-empty">還沒選，從上方候選清單按「＋ 加入」。最多 ' + MAIL_PICK_COUNT + ' 則。</div>';
+          return;
+        }
+        list.forEach(function (it, i) {
+          var row = document.createElement('div');
+          row.className = 'gvm-picked-row';
+          var no = document.createElement('div');
+          no.className = 'gvm-picked-no';
+          no.textContent = pad2(i + 1);
+          var main = document.createElement('div');
+          main.className = 'gvm-picked-main';
+          var title = document.createElement('input');
+          title.type = 'text'; title.value = it.t;
+          title.addEventListener('input', function () { it.t = title.value; renderMailPreview(); });
+          main.appendChild(title);
+          if (kind === 'podcast') {
+            var ft = document.createElement('input');
+            ft.type = 'text'; ft.value = it.ft || ''; ft.placeholder = '來賓（ft.）';
+            ft.style.marginTop = '5px';
+            ft.addEventListener('input', function () { it.ft = ft.value; renderMailPreview(); });
+            main.appendChild(ft);
+          } else {
+            var sm = document.createElement('textarea');
+            sm.value = it.summary || ''; sm.placeholder = '預覽縮文';
+            sm.addEventListener('input', function () { it.summary = sm.value; renderMailPreview(); });
+            main.appendChild(sm);
+          }
+          var acts = document.createElement('div');
+          acts.className = 'gvm-picked-actions';
+          [['▲', -1], ['▼', 1]].forEach(function (m) {
+            var b = document.createElement('button');
+            b.type = 'button'; b.className = 'gvm-mini'; b.textContent = m[0];
+            b.disabled = (m[1] === -1 && i === 0) || (m[1] === 1 && i === list.length - 1);
+            b.addEventListener('click', function () { moveMailItem(kind, i, m[1]); });
+            acts.appendChild(b);
+          });
+          var del = document.createElement('button');
+          del.type = 'button'; del.className = 'gvm-mini'; del.textContent = '✕';
+          del.addEventListener('click', function () { removeMailItem(kind, i); });
+          acts.appendChild(del);
+          row.appendChild(no); row.appendChild(main); row.appendChild(acts);
+          host.appendChild(row);
+        });
+      });
+  }
+
+  // ---- 產生信件 HTML ---------------------------------------------------------
+  // 這裡是 email HTML，不是網頁 HTML：一律 table 排版、樣式全部行內、寬度固定
+  // 600px。Outlook 用 Word 的引擎排版，flex/grid/外部 CSS 幾乎都不能用。
+  var MC = {
+    accent: '#00a153', deep: '#00733b', soft: '#4a8a6a', line: '#d6f0e2',
+    tint: '#f2fbf6', ink: '#2a2f36', mute: '#6b7280', paper: '#ffffff', bg: '#f4f6f5'
+  };
+  var MSERIF = "'Noto Serif TC','Songti TC',serif";
+  var MSANS = "'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif";
+
+  var MAIL_TEXT_COL = 408;   // 600 − 左右內距 80 − 縮圖欄 112
+  var MAIL_TITLE_FS = 15;
+  var MAIL_EXC_FS = 12.5;
+  var MAIL_TITLE_CAP = MAIL_TEXT_COL / MAIL_TITLE_FS;
+  // 中文斷行禁則（行首不能是句號、右引號等）會把字擠到下一行，「剛好塞滿 N 行」
+  // 實際常變成 N+1 行，所以留 10% 安全邊距。這個值是實測校準出來的。
+  var MAIL_EXC_CAP = MAIL_TEXT_COL / MAIL_EXC_FS * 0.90;
+  var MAIL_TOTAL_LINES = 4;  // 標題行數 + 縮文行數，恆定 → 每列等高
+  var MAIL_ART_CELL_H = 128;
+  var MAIL_POD_CELL_H = 74;
+
+  function isWide(ch) {
+    var c = ch.charCodeAt(0);
+    return c > 0x1100 && (
+      c <= 0x115f || c === 0x2329 || c === 0x232a ||
+      (c >= 0x2e80 && c <= 0xa4cf && c !== 0x303f) ||
+      (c >= 0xac00 && c <= 0xd7a3) || (c >= 0xf900 && c <= 0xfaff) ||
+      (c >= 0xfe30 && c <= 0xfe6f) || (c >= 0xff00 && c <= 0xff60) ||
+      (c >= 0xffe0 && c <= 0xffe6));
+  }
+  function dwidth(s) {
+    var w = 0;
+    for (var i = 0; i < s.length; i++) w += isWide(s.charAt(i)) ? 1 : 0.5;
+    return w;
+  }
+  function clipToWidth(s, budget) {
+    s = (s || '').trim();
+    if (dwidth(s) <= budget) return s;
+    var w = 0, out = '';
+    for (var i = 0; i < s.length; i++) {
+      var cw = isWide(s.charAt(i)) ? 1 : 0.5;
+      if (w + cw > budget - 1) break;
+      out += s.charAt(i); w += cw;
+    }
+    return out.replace(/[，、。；：（(「]+$/, '') + '…';
+  }
+  function titleLineCount(t) {
+    return Math.max(1, Math.min(2, Math.ceil(dwidth(t) / MAIL_TITLE_CAP)));
+  }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .split('&').join('&amp;').split('<').join('&lt;')
+      .split('>').join('&gt;').split('"').join('&quot;');
+  }
+
+  function mailMasthead(sub) {
+    return '<tr><td style="height:4px;background:' + MC.accent + ';font-size:0;line-height:0;">&nbsp;</td></tr>' +
+      '<tr><td align="center" style="padding:30px 40px 0;">' +
+      '<div style="font-family:' + MSANS + ';font-size:10px;letter-spacing:.28em;color:' + MC.accent + ';font-weight:700;">ESG DAILY CURATION</div>' +
+      '<div style="font-family:' + MSERIF + ';font-size:26px;font-weight:900;color:' + MC.deep + ';padding:8px 0 4px;">ESG 遠見共好圈</div>' +
+      '<div style="font-family:' + MSANS + ';font-size:12px;color:' + MC.mute + ';">' + esc(sub) + '</div>' +
+      '<div style="width:44px;height:2px;background:' + MC.accent + ';margin:16px auto 0;font-size:0;">&nbsp;</div>' +
+      '</td></tr>';
+  }
+  function mailSection(icon, label) {
+    return '<tr><td style="padding:32px 40px 0;">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
+      '<td style="background:' + MC.tint + ';border-left:3px solid ' + MC.accent + ';padding:9px 14px;' +
+      'font-family:' + MSANS + ';font-size:14px;font-weight:700;color:' + MC.deep + ';letter-spacing:.04em;">' +
+      icon + ' ' + esc(label) + '</td></tr></table></td></tr>';
+  }
+  function mailPodRow(p) {
+    var n = (p.n || '').split('EP').pop().trim();
+    return '<tr><td style="padding:15px 0;border-bottom:1px solid ' + MC.line + ';">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
+      '<td width="86" valign="top" style="width:86px;">' +
+        '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>' +
+        '<td style="width:2px;height:42px;background:' + MC.accent + ';font-size:0;line-height:0;">&nbsp;</td>' +
+        '<td valign="top" style="padding-left:12px;">' +
+        '<div style="font-family:' + MSANS + ';font-size:9px;letter-spacing:.18em;color:' + MC.soft + ';font-weight:700;line-height:1.4;">EP</div>' +
+        '<div style="font-family:' + MSERIF + ';font-size:23px;font-weight:700;color:' + MC.deep + ';line-height:1.15;">' + esc(n) + '</div>' +
+        '</td></tr></table></td>' +
+      '<td valign="top" height="' + MAIL_POD_CELL_H + '" style="height:' + MAIL_POD_CELL_H + 'px;">' +
+      '<a href="' + esc(p.url) + '" style="font-family:' + MSERIF + ';font-size:15px;font-weight:700;color:' + MC.deep + ';text-decoration:none;line-height:1.6;">' + esc(p.t) + '</a>' +
+      (p.ft ? '<div style="font-family:' + MSANS + ';font-size:12px;color:' + MC.soft + ';padding-top:7px;line-height:1.5;">🎙 ' + esc(p.ft) + '</div>' : '') +
+      '</td></tr></table></td></tr>';
+  }
+  function mailArtRow(a) {
+    var tl = titleLineCount(a.t);
+    var excerpt = clipToWidth(a.summary || '', (MAIL_TOTAL_LINES - tl) * MAIL_EXC_CAP);
+    var thumb = a.img
+      ? '<img src="' + esc(a.img) + '" width="96" height="96" alt="" style="width:96px;height:96px;object-fit:cover;display:block;background:' + MC.tint + ';">'
+      : '';
+    return '<tr><td style="padding:18px 0;border-bottom:1px solid ' + MC.line + ';">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
+      '<td width="112" valign="top" style="width:112px;">' + thumb + '</td>' +
+      '<td valign="top" height="' + MAIL_ART_CELL_H + '" style="height:' + MAIL_ART_CELL_H + 'px;">' +
+      '<a href="' + esc(a.url) + '" style="font-family:' + MSERIF + ';font-size:' + MAIL_TITLE_FS + 'px;font-weight:700;color:' + MC.deep + ';text-decoration:none;line-height:1.6;">' + esc(a.t) + '</a>' +
+      '<div style="font-family:' + MSANS + ';font-size:' + MAIL_EXC_FS + 'px;line-height:1.8;color:' + MC.ink + ';padding-top:7px;">' + esc(excerpt) + '</div>' +
+      '<div style="font-family:' + MSANS + ';font-size:11.5px;color:' + MC.soft + ';padding-top:8px;">' + esc(a.s) + '・' + esc(a.y) + '</div>' +
+      '</td></tr></table></td></tr>';
+  }
+  function mailFooter() {
+    var d = mailDate();
+    var signDate = pad2(d.getMonth() + 1) + '.' + pad2(d.getDate());
+    var outro = esc(mailFillVars(mcOutro.value)).split('\n').join('<br>');
+    return '<tr><td style="padding:34px 40px 0;font-family:' + MSANS + ';font-size:13.5px;line-height:1.95;color:' + MC.ink + ';">' + outro + '</td></tr>' +
+      '<tr><td style="padding:26px 40px 32px;">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
+      '<tr><td style="border-top:1px solid ' + MC.line + ';padding-top:18px;" align="right">' +
+      '<span style="font-family:' + MSANS + ';font-size:13px;color:' + MC.ink + ';font-weight:700;">' + esc(mailFillVars(mcSign.value)) + '</span>' +
+      '<span style="font-family:' + MSANS + ';font-size:12px;color:' + MC.mute + ';padding-left:10px;">' + signDate + '</span>' +
+      '</td></tr></table></td></tr>';
+  }
+
+  function buildMailHtml() {
+    var body = mailMasthead(mailFillVars(mcSub.value)) +
+      '<tr><td style="padding:26px 40px 0;font-family:' + MSANS + ';font-size:14px;line-height:1.95;color:' + MC.ink + ';">' +
+      '<div style="font-weight:700;padding-bottom:10px;">' + esc(mailFillVars(mcGreet.value)) + '</div>' +
+      esc(mailFillVars(mcIntro.value)).split('\n').join('<br>') + '</td></tr>';
+    if (mailState.podcasts.length) {
+      body += mailSection('🎧', '本月熱門 Podcast 專訪') +
+        '<tr><td style="padding:4px 40px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
+        mailState.podcasts.map(mailPodRow).join('') + '</table></td></tr>';
+    }
+    if (mailState.articles.length) {
+      body += mailSection('💡', '本月精選永續文章') +
+        '<tr><td style="padding:4px 40px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
+        mailState.articles.map(mailArtRow).join('') + '</table></td></tr>';
+    }
+    body += mailFooter();
+    return '<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>' + esc(mailSubject()) + '</title></head>' +
+      '<body style="margin:0;padding:24px 0;background:' + MC.bg + ';">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">' +
+      '<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" ' +
+      'style="width:600px;max-width:600px;background:' + MC.paper + ';border:1px solid ' + MC.line + ';">' +
+      body + '</table></td></tr></table></body></html>';
+  }
+
+  function mailSubject() {
+    return 'ESG 遠見共好圈｜' + mailFillVars(mcSub.value);
+  }
+
+  function renderMailPreview() {
+    saveMailCopy();
+    var doc = mailIframe.contentDocument || mailIframe.contentWindow.document;
+    doc.open(); doc.write(buildMailHtml()); doc.close();
+    // iframe 高度跟著內容長，否則會出現雙層捲軸
+    setTimeout(fitMailPreview, 60);
+  }
+
+  // 信件本身固定 600px。預覽欄比它窄時（手機、或視窗拉小）整份等比縮小，
+  // 而不是讓使用者左右拖著看半封信。縮放後外框高度要跟著改，否則底下會空一大塊。
+  function fitMailPreview() {
+    var doc = mailIframe.contentDocument;
+    if (!doc || !doc.body) return;
+    var scaleBox = $('gvm-mail-scale');
+    var avail = mailPreviewWrap.clientWidth - 28;   // 扣掉 .gvm-mail-frame 左右內距
+    var scale = Math.min(1, avail / 600);
+    var h = doc.body.scrollHeight;
+    mailIframe.style.height = h + 'px';
+    mailIframe.style.transform = scale < 1 ? 'scale(' + scale + ')' : 'none';
+    scaleBox.style.height = Math.ceil(h * scale) + 'px';
+    scaleBox.style.width = Math.ceil(600 * scale) + 'px';
+  }
+  window.addEventListener('resize', function () {
+    if (currentMode === 'mail') fitMailPreview();
+  }, { passive: true });
+
+  // ---- 輸出 ------------------------------------------------------------------
+  function mailPlainText() {
+    var lines = [mailFillVars(mcGreet.value), '', mailFillVars(mcIntro.value)];
+    if (mailState.podcasts.length) {
+      lines.push('', '🎧 本月熱門 Podcast 專訪', '');
+      mailState.podcasts.forEach(function (p, i) {
+        lines.push((i + 1) + '.' + p.t + (p.ft ? ' ft. ' + p.ft : ''), '👉' + p.url, '');
+      });
+    }
+    if (mailState.articles.length) {
+      lines.push('💡 本月精選永續文章', '');
+      mailState.articles.forEach(function (a, i) {
+        lines.push((i + 1) + '.' + a.t, '👉' + a.url, '');
+      });
+    }
+    var d = mailDate();
+    lines.push(mailFillVars(mcOutro.value), '',
+      mailFillVars(mcSign.value) + ' ' + pad2(d.getMonth() + 1) + '.' + pad2(d.getDate()));
+    return lines.join('\n');
+  }
+
+  function copyMailRichText() {
+    var html = buildMailHtml();
+    var text = mailPlainText();
+    // 富文字複製要同時放 text/html 與 text/plain：貼進 Outlook 拿前者保留排版與
+    // 超連結，貼進純文字欄位則自動退回後者。
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([text], { type: 'text/plain' })
+      })]).then(function () {
+        setStatus('已複製為富文字，直接貼進 Outlook 就會保留排版與連結。');
+        showButtonFeedback(mailCopyBtn, '已複製');
+      }, function () { copyMailFallback(html, text); });
+    } else {
+      copyMailFallback(html, text);
+    }
+  }
+  // 舊瀏覽器沒有 ClipboardItem：塞一個暫時的 contenteditable 再走 execCommand，
+  // 這條路一樣能帶走格式，只是無法同時指定純文字版本。
+  function copyMailFallback(html, text) {
+    var holder = document.createElement('div');
+    holder.contentEditable = 'true';
+    holder.innerHTML = html;
+    holder.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+    document.body.appendChild(holder);
+    var range = document.createRange();
+    range.selectNodeContents(holder);
+    var sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(range);
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+    document.body.removeChild(holder);
+    if (ok) {
+      setStatus('已複製為富文字，直接貼進 Outlook 就會保留排版與連結。');
+      showButtonFeedback(mailCopyBtn, '已複製');
+    } else {
+      copyTextToClipboard(text,
+        function () { setStatus('富文字複製失敗，已改複製純文字版本。', true); },
+        function () { setStatus('複製失敗，請改用「下載 .eml」。', true); });
+    }
+  }
+
+  function downloadMailEml() {
+    var html = buildMailHtml();
+    var subject = mailSubject();
+    // .eml 就是一封 MIME 郵件。主旨含中文要用 RFC 2047 的 Base64 編法，不然
+    // Outlook 會顯示亂碼；內文同樣用 Base64，避免長行被郵件軟體硬折。
+    var b64 = function (str) {
+      var bytes = new TextEncoder().encode(str);
+      var bin = '';
+      bytes.forEach(function (b) { bin += String.fromCharCode(b); });
+      return btoa(bin);
+    };
+    var wrapped = b64(html).replace(/(.{76})/g, '$1\r\n');
+    var eml = [
+      'Subject: =?UTF-8?B?' + b64(subject) + '?=',
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=UTF-8',
+      'Content-Transfer-Encoding: base64',
+      'X-Unsent: 1',
+      '', wrapped
+    ].join('\r\n');
+    var d = mailDate();
+    var name = 'ESG共好圈會員月報_' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '.eml';
+    var url = URL.createObjectURL(new Blob([eml], { type: 'message/rfc822' }));
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    setStatus('已下載 ' + name + '，雙擊即可用 Outlook 開成待寄郵件。');
+    showButtonFeedback(mailEmlBtn, '已下載');
+  }
+
+  // ---- 模式切換 --------------------------------------------------------------
+  var currentMode = 'curation';
+
+  async function enterMailMode() {
+    if (currentMode === 'mail') return;
+    if (state.articles.length &&
+        !window.confirm('切換到「會員溝通信件」會保留目前這份策展草稿，但畫面會切換過去。\n\n確定要切換嗎？')) {
+      return;
+    }
+    currentMode = 'mail';
+    document.body.classList.add('source-esg');   // 沿用 ESG 綠色主題
+    curationWorkspace.style.display = 'none';
+    mailWorkspace.style.display = 'block';
+    previewBody.style.display = 'none';
+    mailPreviewWrap.style.display = 'block';
+    updateSourceButtons();
+    sourceCaptionEl.textContent = '會員溝通信件生成・Podcast 與文章各自挑選，右側即時預覽最終信件';
+    await ensureMailData();
+    renderMailPicked();
+    renderMailPreview();
+  }
+
+  function leaveMailMode() {
+    currentMode = 'curation';
+    mailWorkspace.style.display = 'none';
+    mailPreviewWrap.style.display = 'none';
+    curationWorkspace.style.display = 'block';
+    previewBody.style.display = '';
+  }
+
+  function updateSourceButtons() {
+    sourceGvmBtn.classList.toggle('active', currentMode === 'curation' && currentSource === 'gvm');
+    sourceEsgBtn.classList.toggle('active', currentMode === 'curation' && currentSource === 'esg');
+    sourceMailBtn.classList.toggle('active', currentMode === 'mail');
+  }
+
+  // ---- 事件 ------------------------------------------------------------------
+  (function initMailDate() {
+    var d = new Date();
+    mcDate.value = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  })();
+  loadMailCopy();
+  // 署名不預設任何人的名字——這個分頁不只一個人用，預填同事的姓名比留空更糟。
+  mcSign.placeholder = '填一次就會記住，例如：怡儒Annie';
+  mcSub.placeholder = '例如：每月會員精選（可用 {{日期}} 等變數）';
+
+  mcToggle.addEventListener('click', function () {
+    var open = mcBody.classList.toggle('open');
+    mcToggle.textContent = (open ? '▾' : '▸') + ' 信件文案・開頭與結尾';
+  });
+  mpSearchBtn.addEventListener('click', searchMailPodcasts);
+  mpKw.addEventListener('keydown', function (e) { if (e.key === 'Enter') searchMailPodcasts(); });
+  maSearchBtn.addEventListener('click', searchMailArticles);
+  maKw.addEventListener('keydown', function (e) { if (e.key === 'Enter') searchMailArticles(); });
+  maCat.addEventListener('change', function () { populateMailSubCategories(); searchMailArticles(); });
+  maSub.addEventListener('change', searchMailArticles);
+  [mcSub, mcGreet, mcIntro, mcOutro, mcSign].forEach(function (el) {
+    el.addEventListener('input', renderMailPreview);
+  });
+  mcDate.addEventListener('change', renderMailPreview);
+  mailCopyBtn.addEventListener('click', copyMailRichText);
+  mailEmlBtn.addEventListener('click', downloadMailEml);
+  sourceMailBtn.addEventListener('click', enterMailMode);
 
   async function init() {
     var draft = readDraft();
