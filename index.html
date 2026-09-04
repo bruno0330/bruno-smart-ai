@@ -10,6 +10,28 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.46.0/dist/tabler-icons.min.css">
 <style>
+  /* ── 設計 token ────────────────────────────────────────────────────────────
+     入口頁與三個工具頁共用同一組。之前兩邊各有一套（入口頁有陰影階層與深色模式、
+     工具頁沒有；工具頁用了 17 種零散字級），改一邊另一邊不會跟上——這組 token 就是
+     為了讓「改一次、兩邊一致」成立。動任何尺寸請改這裡，不要在個別規則寫死數值。
+
+     字級 8 級：工具頁用 1–5（密集任務介面），入口頁用 3–8（敘事展示）。 */
+  :root{
+    --fs-1:11px; --fs-2:12.5px; --fs-3:14px; --fs-4:16px;
+    --fs-5:20px; --fs-6:26px; --fs-7:36px; --fs-8:52px;
+
+    --lh-tight:1.25; --lh-snug:1.5; --lh-normal:1.7; --lh-loose:1.9;
+
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px;
+    --sp-6:32px; --sp-7:48px; --sp-8:72px; --sp-9:112px;
+
+    --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:26px;
+
+    /* 動效：一律用這兩條曲線，不要每個地方各寫各的 */
+    --ease:cubic-bezier(.22,.61,.36,1);
+    --dur-fast:.18s; --dur:.32s; --dur-slow:.6s;
+  }
+
   :root{
     --bg:#f6f6f8; --surface:#ffffff; --surface-2:#fbfbfc; --border:#e7e7ea;
     --text:#18181b; --text-2:#6b6b74; --text-3:#a4a4ad;
@@ -172,6 +194,79 @@
     font-size:14px; font-weight:600;
   }
   .lock-error{font-size:12.5px; color:#e2534d; margin-top:12px; min-height:16px;}
+
+  /* ── 敘事式展示版面 ────────────────────────────────────────────────────────
+     入口頁是展示頁，不是儀表板。原本 12 個部門排成同一種網格，2 個真的能用的
+     跟 10 個還沒做的長得幾乎一樣——能用的東西被還沒做的淹沒。改成：已上線的
+     各佔一個完整段落，規劃中的收成安靜的路線圖。 */
+  .hero{ text-align:center; padding:var(--sp-9) 0 var(--sp-8); }
+  .hero-mark{ width:64px; height:64px; border-radius:var(--r-lg); margin:0 auto var(--sp-5);
+              box-shadow:var(--shadow-lg); overflow:hidden; }
+  .hero-mark img{ width:100%; height:100%; display:block; }
+  .hero-title{ font-size:var(--fs-8); line-height:var(--lh-tight); font-weight:700;
+               letter-spacing:-.02em; margin:0 0 var(--sp-4); }
+  .hero-lead{ font-size:var(--fs-5); line-height:var(--lh-snug); color:var(--text-2);
+              margin:0 auto var(--sp-5); max-width:31em; font-weight:400; }
+  .hero-meta{ font-size:var(--fs-2); color:var(--text-3); letter-spacing:.04em; }
+
+  .showcase{ padding:var(--sp-8) 0; border-top:1px solid var(--border); }
+  .sc-eyebrow{ font-size:var(--fs-1); font-weight:700; letter-spacing:.18em;
+               color:var(--brand); text-transform:uppercase; margin-bottom:var(--sp-3); }
+  .sc-title{ font-size:var(--fs-7); line-height:var(--lh-tight); font-weight:700;
+             letter-spacing:-.015em; margin:0 0 var(--sp-4); }
+  .sc-lead{ font-size:var(--fs-4); line-height:var(--lh-normal); color:var(--text-2);
+            margin:0 0 var(--sp-6); max-width:38em; }
+  .sc-stats{ display:flex; gap:var(--sp-7); flex-wrap:wrap; margin-bottom:var(--sp-6); }
+  .sc-stats div{ display:flex; flex-direction:column; gap:var(--sp-1); }
+  .sc-stats b{ font-size:var(--fs-6); font-weight:700; letter-spacing:-.01em; font-variant-numeric:tabular-nums; }
+  .sc-stats span{ font-size:var(--fs-2); color:var(--text-3); }
+  .sc-tabs{ display:flex; gap:var(--sp-2); flex-wrap:wrap; margin-bottom:var(--sp-6); }
+  .sc-tabs span{ font-size:var(--fs-2); color:var(--text-2); background:var(--surface);
+                 border:1px solid var(--border); border-radius:999px; padding:var(--sp-2) var(--sp-4); }
+  .sc-cta{
+    display:inline-flex; align-items:center; gap:var(--sp-2); text-decoration:none;
+    background:var(--text); color:var(--bg); font-size:var(--fs-3); font-weight:600;
+    padding:var(--sp-3) var(--sp-5); border-radius:999px;
+    transition:transform var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+  }
+  .sc-cta:hover{ transform:translateY(-1px); opacity:.88; }
+  .sc-cta:active{ transform:scale(.98); }
+
+  .roadmap{ padding:var(--sp-8) 0 var(--sp-7); border-top:1px solid var(--border); }
+  .rm-title{ font-size:var(--fs-5); font-weight:700; margin:0 0 var(--sp-2); }
+  .rm-sub{ font-size:var(--fs-3); color:var(--text-3); margin:0 0 var(--sp-6); }
+  .rm-group{ margin-bottom:var(--sp-5); }
+  .rm-group-name{ font-size:var(--fs-1); font-weight:700; letter-spacing:.1em;
+                  color:var(--text-3); margin-bottom:var(--sp-3); }
+  .rm-items{ display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+  .rm-item{
+    display:flex; align-items:center; gap:var(--sp-2); cursor:pointer;
+    font-size:var(--fs-2); color:var(--text-2); background:var(--surface-2);
+    border:1px solid var(--border); border-radius:var(--r-sm);
+    padding:var(--sp-2) var(--sp-4); font-family:inherit;
+    transition:border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  }
+  .rm-item:hover{ border-color:var(--text-3); color:var(--text); }
+  .rm-item i{ font-size:var(--fs-3); color:var(--text-3); }
+
+  .site-foot{ padding:var(--sp-7) 0 var(--sp-8); border-top:1px solid var(--border);
+              font-size:var(--fs-2); color:var(--text-3); line-height:var(--lh-normal); }
+
+  /* 捲動揭露：一次講一件事的節奏靠這個。尊重系統的減少動態設定。 */
+  .js-reveal .reveal{ opacity:0; transform:translateY(18px);
+           transition:opacity var(--dur-slow) var(--ease), transform var(--dur-slow) var(--ease); }
+  .js-reveal .reveal.in{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion:reduce){
+    .js-reveal .reveal{ opacity:1; transform:none; transition:none; }
+    .sc-cta{ transition:none; }
+  }
+  @media (max-width:640px){
+    .hero{ padding:var(--sp-8) 0 var(--sp-7); }
+    .hero-title{ font-size:var(--fs-7); }
+    .hero-lead{ font-size:var(--fs-4); }
+    .sc-title{ font-size:var(--fs-6); }
+    .sc-stats{ gap:var(--sp-5); }
+  }
 </style>
 </head>
 <body>
@@ -189,157 +284,151 @@
 
 <div class="wrap" id="app" style="display:none">
 
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo"><img src="assets/logo-mark.svg" alt="Bruno Smart AI Ltd."></div>
-      <div>
-        <div class="brand-name">Bruno Smart AI Ltd.</div>
-        <div class="brand-sub">部門總覽</div>
-      </div>
-    </div>
-    <div class="progress-card">
-      <div class="progress-track"><div class="progress-fill"></div></div>
-      <div class="progress-label"><b>2</b> / 12 部門啟用</div>
-    </div>
-  </div>
+  <header class="hero reveal">
+    <div class="hero-mark"><img src="assets/logo-mark.svg" alt=""></div>
+    <h1 class="hero-title">Bruno Smart AI Ltd.</h1>
+    <p class="hero-lead">一人公司，用組織架構管理自己的工具。<br>每個「部門」都是一個真的做出來、真的省下時間的東西。</p>
+    <div class="hero-meta" id="heroMeta">零 API 呼叫</div>
+  </header>
 
-  <div class="stats">
-    <div class="stat"><div class="stat-num">6</div><div class="stat-label">組織處數</div></div>
-    <div class="stat"><div class="stat-num">12</div><div class="stat-label">部門總數</div></div>
-    <div class="stat"><div class="stat-num" style="color:var(--brand)">2</div><div class="stat-label">已啟用</div></div>
-    <div class="stat"><div class="stat-num">10</div><div class="stat-label">規劃中</div></div>
-  </div>
+  <section class="showcase reveal">
+    <div class="sc-eyebrow">智能內容處 · 已上線</div>
+    <h2 class="sc-title">遠見智能策展部</h2>
+    <p class="sc-lead">從三個真實內容庫挑素材，產出 LINE 推播與會員溝通信件。選文邏輯全部跑在瀏覽器端，不呼叫任何 AI API，也不會生成任何一句原文裡沒有的話——每一則標題、摘要與連結都來自真實文章。</p>
+    <div class="sc-stats">
+      <div><b>29,583</b><span>遠見線上讀・1987–2026</span></div>
+      <div><b>4,289</b><span>ESG遠見共好圈・2005–2026</span></div>
+      <div><b>119</b><span>ESG共好圈 Podcast</span></div>
+    </div>
+    <div class="sc-tabs">
+      <span>遠見線上讀</span><span>ESG遠見共好圈</span><span>會員溝通信件</span>
+    </div>
+    <a class="sc-cta" href="smart-curation/index.html">開啟策展部 <i class="ti ti-arrow-right"></i></a>
+  </section>
 
-  <div class="division">
-    <div class="division-head">
-      <span class="division-name">產品研發處</span>
-      <span class="division-count">2 部門</span>
-      <div class="division-line"></div>
+  <section class="showcase reveal">
+    <div class="sc-eyebrow">會員經營處 · 已上線</div>
+    <h2 class="sc-title">數位行銷部</h2>
+    <p class="sc-lead">UTM 產生器。官網版位直接選，不用背參數格式，也不會因為每個人手打而讓成效報表對不起來。支援批次產生與參數記憶。</p>
+    <div class="sc-tabs">
+      <span>單筆產生</span><span>批次產生</span><span>版位快速選擇</span>
     </div>
-    <div class="tiles">
-      <div class="tile soon c-blue" onclick="notReady('市場調查部')">
-        <div class="tile-icon"><i class="ti ti-search"></i></div>
-        <div class="tile-name">市場調查部</div>
-        <p class="tile-desc">追蹤市場動態與競品情報</p>
-        <span class="pill"><span class="dot"></span>即將推出</span>
-      </div>
-      <div class="tile soon c-blue" onclick="notReady('輿情分析部')">
-        <div class="tile-icon"><i class="ti ti-message-2"></i></div>
-        <div class="tile-name">輿情分析部</div>
-        <p class="tile-desc">監測社群與新聞聲量，掌握輿情走向</p>
-        <span class="pill"><span class="dot"></span>即將推出</span>
-      </div>
-    </div>
-  </div>
+    <a class="sc-cta" href="digital-marketing/index.html">開啟行銷部 <i class="ti ti-arrow-right"></i></a>
+  </section>
 
-  <div class="division">
-    <div class="division-head">
-      <span class="division-name">智能內容處</span>
-      <span class="division-count">2 部門</span>
-      <div class="division-line"></div>
-    </div>
-    <div class="tiles">
-      <a class="tile active" href="smart-curation/index.html">
-        <div class="tile-icon"><i class="ti ti-sparkles"></i></div>
-        <div class="tile-name">智能策展部</div>
-        <p class="tile-desc">從遠見文章庫策展選文，產出LINE推播頁面</p>
-        <span class="pill"><span class="dot"></span>遠見線上讀 · 點擊開啟</span>
-      </a>
-      <div class="tile soon c-teal" onclick="notReady('內容生成部')">
-        <div class="tile-icon"><i class="ti ti-pencil"></i></div>
-        <div class="tile-name">內容生成部</div>
-        <p class="tile-desc">協助草擬文章與行銷文案初稿</p>
-        <span class="pill"><span class="dot"></span>即將推出</span>
-      </div>
-    </div>
-  </div>
+  <section class="roadmap reveal">
+    <h2 class="rm-title">路線圖</h2>
+    <p class="rm-sub">另外 10 個部門規劃中。做完一個上線一個，不先開空頭支票。</p>
 
-  <div class="division">
-    <div class="division-head">
-      <span class="division-name">會員經營處</span>
-      <span class="division-count">3 部門</span>
-      <div class="division-line"></div>
-    </div>
-    <div class="tiles">
-      <div class="tile soon c-pink" onclick="notReady('會員數據分析部')">
-        <div class="tile-icon"><i class="ti ti-chart-bar"></i></div>
-        <div class="tile-name">會員數據分析部</div>
-        <p class="tile-desc">分析會員行為與訂閱數據</p>
-        <span class="pill"><span class="dot"></span>即將推出</span>
+    <div class="rm-group">
+      <div class="rm-group-name">產品研發處</div>
+      <div class="rm-items">
+        <button class="rm-item" onclick="notReady('市場調查部')"><i class="ti ti-search"></i>市場調查部</button>
+        <button class="rm-item" onclick="notReady('輿情分析部')"><i class="ti ti-message-2"></i>輿情分析部</button>
       </div>
-      <div class="tile soon c-pink" onclick="notReady('會員關懷部')">
-        <div class="tile-icon"><i class="ti ti-heart"></i></div>
-        <div class="tile-name">會員關懷部</div>
-        <p class="tile-desc">會員互動維繫與流失預警</p>
-        <span class="pill"><span class="dot"></span>即將推出</span>
-      </div>
-      <a class="tile active" href="digital-marketing/index.html">
-        <div class="tile-icon"><i class="ti ti-speakerphone"></i></div>
-        <div class="tile-name">數位行銷部</div>
-        <p class="tile-desc">UTM 產生器 · 官網版位快速選擇</p>
-        <span class="pill"><span class="dot"></span>點擊開啟</span>
-      </a>
     </div>
-  </div>
+    <div class="rm-group">
+      <div class="rm-group-name">智能內容處</div>
+      <div class="rm-items">
+        <button class="rm-item" onclick="notReady('內容生成部')"><i class="ti ti-pencil"></i>內容生成部</button>
+      </div>
+    </div>
+    <div class="rm-group">
+      <div class="rm-group-name">會員經營處</div>
+      <div class="rm-items">
+        <button class="rm-item" onclick="notReady('會員數據分析部')"><i class="ti ti-chart-bar"></i>會員數據分析部</button>
+        <button class="rm-item" onclick="notReady('會員關懷部')"><i class="ti ti-heart"></i>會員關懷部</button>
+      </div>
+    </div>
+    <div class="rm-group">
+      <div class="rm-group-name">社群經營處</div>
+      <div class="rm-items">
+        <button class="rm-item" onclick="notReady('LINE OA智能貼文部')"><i class="ti ti-send"></i>LINE OA智能貼文部</button>
+      </div>
+    </div>
+    <div class="rm-group">
+      <div class="rm-group-name">圖文設計處</div>
+      <div class="rm-items">
+        <button class="rm-item" onclick="notReady('視覺設計部')"><i class="ti ti-palette"></i>視覺設計部</button>
+      </div>
+    </div>
+    <div class="rm-group">
+      <div class="rm-group-name">秘書處</div>
+      <div class="rm-items">
+        <button class="rm-item" onclick="notReady('CEO秘書部')"><i class="ti ti-mail"></i>CEO秘書部</button>
+        <button class="rm-item" onclick="notReady('客戶關懷部')"><i class="ti ti-headset"></i>客戶關懷部</button>
+      </div>
+    </div>
+  </section>
 
-  <div class="division">
-    <div class="division-head">
-      <span class="division-name">社群經營處</span>
-      <span class="division-count">1 部門</span>
-      <div class="division-line"></div>
-    </div>
-    <div class="tiles">
-      <div class="tile soon c-amber" onclick="notReady('LINE OA智能貼文部')">
-        <div class="tile-icon"><i class="ti ti-send"></i></div>
-        <div class="tile-name">LINE OA智能貼文部</div>
-        <p class="tile-desc">自動生成LINE官方帳號推播貼文</p>
-        <span class="pill"><span class="dot"></span>即將推出</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="division">
-    <div class="division-head">
-      <span class="division-name">圖文設計處</span>
-      <span class="division-count">1 部門</span>
-      <div class="division-line"></div>
-    </div>
-    <div class="tiles">
-      <div class="tile soon c-purple" onclick="notReady('視覺設計部')">
-        <div class="tile-icon"><i class="ti ti-palette"></i></div>
-        <div class="tile-name">視覺設計部</div>
-        <p class="tile-desc">產出社群與活動視覺素材</p>
-        <span class="pill"><span class="dot"></span>即將推出</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="division">
-    <div class="division-head">
-      <span class="division-name">秘書處</span>
-      <span class="division-count">2 部門</span>
-      <div class="division-line"></div>
-    </div>
-    <div class="tiles">
-      <div class="tile soon c-green" onclick="notReady('CEO秘書部')">
-        <div class="tile-icon"><i class="ti ti-mail"></i></div>
-        <div class="tile-name">CEO秘書部</div>
-        <p class="tile-desc">信件草擬與週報整理</p>
-        <span class="pill"><span class="dot"></span>即將推出</span>
-      </div>
-      <div class="tile soon c-green" onclick="notReady('客戶關懷部')">
-        <div class="tile-icon"><i class="ti ti-headset"></i></div>
-        <div class="tile-name">客戶關懷部</div>
-        <p class="tile-desc">自動化派信與客戶回覆</p>
-        <span class="pill"><span class="dot"></span>即將推出</span>
-      </div>
-    </div>
-  </div>
+  <footer class="site-foot reveal">
+    純靜態站，所有工具的運算都在瀏覽器端完成，不經過任何伺服器、不呼叫外部 AI API。<br>
+    內容來源為遠見雜誌與 ESG遠見共好圈官網的公開真實文章。
+  </footer>
 
 </div>
 
 <div class="toast" id="toast"></div>
 <script>
+  // 捲動揭露。先掛上 js-reveal 才套用隱藏狀態——這支腳本沒跑到的話（舊瀏覽器、
+  // JS 出錯）整頁要照常看得見，不能變成一片空白。
+  //
+  // 用捲動時檢查位置而不是 IntersectionObserver：IO 在「瞬間跳位」的情境下
+  // （按 End、錨點跳轉、上一頁還原捲動位置）可能整段沒被觀察到，那一段就會永遠
+  // 保持隱藏。內容看不見是不能接受的失敗，寧可用最笨但不會壞的做法。
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    document.documentElement.classList.add('js-reveal');
+
+    var ticking = false;
+    function sweep() {
+      var pending = document.querySelectorAll('.reveal:not(.in)');
+      if (!pending.length) { window.removeEventListener('scroll', onScroll); return; }
+      var limit = window.innerHeight * 0.92;
+      [].forEach.call(pending, function (el) {
+        var r = el.getBoundingClientRect();
+        if (r.top < limit && r.bottom > 0) el.classList.add('in');
+      });
+    }
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () { sweep(); ticking = false; });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    document.addEventListener('DOMContentLoaded', sweep);
+    // 解鎖後 #app 才 display 出來，尺寸這時才算得出來，需要再掃一次
+    window.setTimeout(sweep, 60);
+  })();
+
+  // 部門數量由實際渲染的內容算出來，不手寫。改版前頁面的統計卡寫「12 部門總數／
+  // 10 規劃中」，但它自己只渲染 11 個部門（2 上線、9 規劃中）——手寫的數字跟內容
+  // 各走各的，改一邊忘了另一邊就會對外說錯。
+  (function () {
+    function fill() {
+      var meta = document.getElementById('heroMeta');
+      if (!meta) return;
+      var live = document.querySelectorAll('.showcase').length;
+      var planned = document.querySelectorAll('.rm-item').length;
+      var divisions = {};
+      [].forEach.call(document.querySelectorAll('.sc-eyebrow'), function (el) {
+        divisions[el.textContent.split('·')[0].trim()] = 1;
+      });
+      [].forEach.call(document.querySelectorAll('.rm-group-name'), function (el) {
+        divisions[el.textContent.trim()] = 1;
+      });
+      meta.textContent = Object.keys(divisions).length + ' 處 ' + (live + planned) + ' 部・' +
+        live + ' 個已上線・零 API 呼叫';
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fill);
+    } else {
+      fill();
+    }
+  })();
+
   function notReady(name){
     var t = document.getElementById('toast');
     t.textContent = name + ' 即將推出，敬請期待';
