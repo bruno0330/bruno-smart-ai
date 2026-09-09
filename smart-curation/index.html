@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>遠見智能策展部</title>
+  <!-- 內部工具，不要被搜尋引擎收錄。刻意用 meta 而非 robots.txt：robots.txt 擋的是
+       「抓取」，爬蟲讀不到頁面就看不到 noindex，反而可能因外部連結而被索引。 -->
+  <meta name="robots" content="noindex, nofollow">
+<title>智能策展部</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -358,14 +361,14 @@
 <div id="gvm-root">
   <div class="gvm-masthead">
     <div class="gvm-masthead-eyebrow">GVM INTELLIGENT CURATION</div>
-    <div class="gvm-masthead-title">遠見智能策展部</div>
+    <div class="gvm-masthead-title">智能策展部</div>
     <div class="gvm-masthead-sub">選擇要策展的資料庫，開始搜尋真實文章、生成推播內容</div>
     <div class="gvm-source-switcher">
       <button type="button" class="gvm-source-btn" id="gvm-source-gvm" data-source="gvm">
-        <span class="dot"></span>遠見線上讀
+        <span class="dot"></span>線上讀
       </button>
       <button type="button" class="gvm-source-btn" id="gvm-source-esg" data-source="esg">
-        <span class="dot"></span>ESG遠見共好圈
+        <span class="dot"></span>共好圈
       </button>
       <button type="button" class="gvm-source-btn" id="gvm-source-mail" data-source="mail">
         <span class="dot"></span>會員溝通信件
@@ -670,7 +673,11 @@
   // 清掉全文快取、重算熱門關鍵字與國際焦點，不用重新整理頁面。
   var DATA_SOURCES = {
     gvm: {
-      label: '遠見線上讀', dataUrl: 'data/curation_index.json', summariesDir: 'data/summaries/',
+      // label 是對外的來源全名（匯出頁尾、出處標註、下載檔名、編者的話署名都用它）；
+      // shortLabel 只給工具介面用。這頁是內部工具，介面可以簡短，但送出去的東西必須
+      // 讓收件者看得出來源是遠見——「《線上讀》」單獨看不像一個媒體名稱。
+      label: '遠見線上讀', shortLabel: '線上讀',
+      dataUrl: 'data/curation_index.json', summariesDir: 'data/summaries/',
       focusCategory: '全球焦點', keywordPlaceholder: '例如：AI、淨零、高齡化',
       previewEyebrow: 'GVM WEEKLY CURATION', previewSub: '每週智能策展・僅收錄遠見雜誌紙本典藏文章', domain: 'gvm.com.tw',
       useUtm: true, utmCampaign: 'gvm_curation',
@@ -680,7 +687,8 @@
       }
     },
     esg: {
-      label: 'ESG遠見共好圈', dataUrl: 'data/esg_curation_index.json', summariesDir: 'data/esg_summaries/',
+      label: 'ESG遠見共好圈', shortLabel: '共好圈',
+      dataUrl: 'data/esg_curation_index.json', summariesDir: 'data/esg_summaries/',
       focusCategory: '全球趨勢', keywordPlaceholder: '例如：淨零、碳權、循環經濟',
       previewEyebrow: 'ESG DAILY CURATION', previewSub: '每日智能策展・僅收錄ESG遠見共好圈真實報導', domain: 'esg.gvm.com.tw',
       // ESG 共好圈的推播是分享給團隊看的，不是對外行銷檔期，沒有回頭看成效報表的需求，
@@ -2022,7 +2030,7 @@
     document.body.classList.toggle('source-esg', currentSource === 'esg');
     updateSourceButtons();
     keywordInput.placeholder = cfg.keywordPlaceholder;
-    focusPanelLabelEl.textContent = '4・國際焦點（自動帶入，' + cfg.label + '真實報導）';
+    focusPanelLabelEl.textContent = '4・國際焦點（自動帶入，' + cfg.shortLabel + '真實報導）';
     utmSectionEl.style.display = cfg.useUtm ? 'block' : 'none';
     if (cfg.useUtm) {
       // utm_campaign 依資料庫帶不同預設值，讓 LINE 成效報表能分辨這則推播來自哪個資料庫。
@@ -2070,7 +2078,7 @@
       computeYearRange();
       populateYears();
       var rangeText = dataYearRange.label ? dataYearRange.label + '・' : '';
-      sourceCaptionEl.textContent = '目前資料庫：' + cfg.label + '（' + ARTICLES.length + ' 篇真實文章・' + rangeText + '零 API 呼叫）';
+      sourceCaptionEl.textContent = '目前資料庫：' + cfg.shortLabel + '（' + ARTICLES.length + ' 篇真實文章・' + rangeText + '零 API 呼叫）';
       setStatus('資料庫共 ' + ARTICLES.length + ' 篇有摘要文章' +
         (dataYearRange.label ? '（' + dataYearRange.label + '）' : '') + '，可開始搜尋。');
       computeGlobalFocus();
@@ -2093,7 +2101,7 @@
     if (source === currentSource) return;
     // 已經選好文章、編好引言時，換資料庫等於整份重來——先確認過再清空，避免手滑點掉一整份工作
     if (state.articles.length) {
-      var ok = window.confirm('切換到「' + DATA_SOURCES[source].label + '」會清空目前這份策展（' +
+      var ok = window.confirm('切換到「' + DATA_SOURCES[source].shortLabel + '」會清空目前這份策展（' +
         state.articles.length + ' 篇文章與編者的話）。\n\n確定要切換嗎？');
       if (!ok) return;
     }
