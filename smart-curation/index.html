@@ -278,6 +278,29 @@
   .gvm-step.active{ color:var(--accent); border-color:var(--field-border); border-bottom-color:var(--accent); background:var(--panel-bg); }
   .gvm-step-badge{ font-size:var(--fs-1); font-weight:400; opacity:.75; }
   .gvm-step-panel{ margin-top:0 !important; border-radius:0 0 6px 6px; }
+  /* ---- 分頁密碼閘門 ---------------------------------------------------------
+     解鎖前整個工作區（#gvm-layout）與草稿橫幅都隱藏。 */
+  body.gvm-gated #gvm-layout, body.gvm-gated .gvm-draft-banner,
+  body.gvm-gated .gvm-source-caption, body.gvm-gated .gvm-mcp-note{ display:none !important; }
+  .gvm-masthead-sub b{ font-weight:700; color:var(--accent-deep); }
+  .gvm-mcp-note{ font-size:var(--fs-1); color:var(--text-soft); margin-top:var(--sp-1); line-height:1.6; }
+  .gvm-mcp-note abbr{ text-decoration:underline dotted; cursor:help; }
+  .gvm-gate{ display:none; max-width:420px; margin:var(--sp-6) auto var(--sp-7); padding:var(--sp-5);
+    background:var(--panel-bg); border-radius:var(--r-md); text-align:center; }
+  body.gvm-gated .gvm-gate{ display:block; }
+  .gvm-gate-icon{ width:36px; height:36px; color:var(--accent); margin-bottom:var(--sp-2); }
+  .gvm-gate-title{ font-size:var(--fs-4); font-weight:700; color:var(--accent-deep); }
+  .gvm-gate-sub{ font-size:var(--fs-2); color:var(--text-soft); margin:var(--sp-1) 0 var(--sp-4); }
+  .gvm-gate-form{ display:flex; flex-direction:column; gap:var(--sp-3); }
+  .gvm-gate-form input{ width:100%; padding:10px 12px; border:1px solid var(--field-border); border-radius:var(--r-sm);
+    font-size:var(--fs-3); font-family:inherit; background:#fff; }
+  .gvm-gate-form input:focus{ outline:none; border-color:var(--accent); }
+  .gvm-gate-form button{ padding:10px 12px; border:0; border-radius:var(--r-sm); background:var(--accent);
+    color:#fff; font-size:var(--fs-3); font-weight:600; font-family:inherit; cursor:pointer; }
+  .gvm-gate-form button:hover:not(:disabled){ background:var(--accent-deep); }
+  .gvm-gate-form button:disabled{ opacity:.5; cursor:not-allowed; }
+  .gvm-gate-msg{ min-height:1.4em; margin-top:var(--sp-3); font-size:var(--fs-2); color:#b42318; }
+  .gvm-gate-msg.info{ color:var(--text-soft); }
   #gvm-mail-scale{ overflow:hidden; }
   /* grid item 預設 min-width:auto，不會縮到比內容小——固定 600px 的信件會直接
      把整欄撐開，量到的「可用寬度」就永遠是 600，縮放算出來自然是 1。 */
@@ -362,7 +385,7 @@
   <div class="gvm-masthead">
     <div class="gvm-masthead-eyebrow">GVM INTELLIGENT CURATION</div>
     <div class="gvm-masthead-title">智能策展部</div>
-    <div class="gvm-masthead-sub">選擇要策展的資料庫，開始搜尋真實文章、生成推播內容</div>
+    <div class="gvm-masthead-sub">選擇要策展的資料庫，開始搜尋真實文章、生成推播內容。<b>本功能僅供內部同仁使用。</b></div>
     <div class="gvm-source-switcher">
       <button type="button" class="gvm-source-btn" id="gvm-source-gvm" data-source="gvm">
         <span class="dot"></span>線上讀
@@ -375,6 +398,7 @@
       </button>
     </div>
     <div class="gvm-source-caption" id="gvm-source-caption"></div>
+    <div class="gvm-mcp-note" id="gvm-mcp-note"></div>
   </div>
 
   <div class="gvm-draft-banner" id="gvm-draft-banner">
@@ -383,7 +407,18 @@
     <button type="button" class="gvm-draft-btn" id="gvm-draft-discard">重新開始</button>
   </div>
 
-  <div class="gvm-layout">
+  <div class="gvm-gate" id="gvm-gate">
+    <svg class="gvm-gate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    <div class="gvm-gate-title">此分頁僅供內部同仁使用</div>
+    <div class="gvm-gate-sub" id="gvm-gate-sub"></div>
+    <form class="gvm-gate-form" id="gvm-gate-form" autocomplete="off">
+      <input type="password" id="gvm-gate-input" placeholder="請輸入密碼" aria-label="分頁密碼" autocomplete="off">
+      <button type="submit" id="gvm-gate-btn">解鎖</button>
+    </form>
+    <div class="gvm-gate-msg" id="gvm-gate-msg" role="alert"></div>
+  </div>
+
+  <div class="gvm-layout" id="gvm-layout">
     <!-- LEFT: editing workspace -->
     <div>
       <div id="gvm-curation-workspace">
@@ -630,6 +665,7 @@
   <span class="arrow">↓</span> 往下滑看即時預覽
 </button>
 
+<script src="gate-config.js"></script>
 <script>
   var $ = function (id) { return document.getElementById(id); };
 
@@ -702,6 +738,7 @@
     }
   };
   var currentSource = 'gvm';
+  var dataLoaded = false;   // 閘門可能讓資料庫晚於預設值才載入，不能只靠 currentSource 判斷
   function sourceConfig() { return DATA_SOURCES[currentSource]; }
 
   var ARTICLES = [];
@@ -736,6 +773,7 @@
   var sourceEsgBtn = $('gvm-source-esg');
   var sourceMailBtn = $('gvm-source-mail');
   var sourceCaptionEl = $('gvm-source-caption');
+  var mcpNoteEl = $('gvm-mcp-note');
   var focusPanelLabelEl = $('gvm-focus-panel-label');
 
   // 同義詞擴充表：key 為代表詞，陣列為同組所有詞。要擴充涵蓋主題直接在這裡加陣列即可。
@@ -1613,8 +1651,8 @@
       var relatedCount = state.articles.length - exactCount;
       lastKeywordEl.textContent = '上次搜尋：「' + keyword + '」・' + (yearLimit ? yearLimit + '年之後' : '不限年份') + '・' + count + '篇';
       setStatus(relatedCount > 0
-        ? ('已找到 ' + exactCount + ' 篇精準符合「' + keyword + '」的文章，另補上 ' + relatedCount + ' 篇同分類延伸閱讀湊到 ' + picked.length + ' 篇（資料庫共 ' + ARTICLES.length + ' 篇有摘要文章）。')
-        : ('已找到 ' + picked.length + ' 篇真實文章（資料庫共 ' + ARTICLES.length + ' 篇有摘要文章）。'));
+        ? ('已找到 ' + exactCount + ' 篇精準符合「' + keyword + '」的文章，另補上 ' + relatedCount + ' 篇同分類延伸閱讀湊到 ' + picked.length + ' 篇。')
+        : ('已找到 ' + picked.length + ' 篇真實文章。'));
       generateBtn.disabled = false;
       showScrollHint();
     });
@@ -1717,7 +1755,7 @@
     utmPanel.style.display = 'none';
     lastKeywordEl.textContent = '';
     clearDraft();
-    setStatus('資料庫共 ' + ARTICLES.length + ' 篇有摘要文章，可開始搜尋。');
+    setStatus('資料庫已載入，可開始搜尋。');
     renderPreview();
     keywordInput.focus();
   });
@@ -2059,6 +2097,7 @@
 
   async function loadSource(source, isSwitch) {
     currentSource = source;
+    dataLoaded = false;
     updateSourceUI();
     generateBtn.disabled = true;
     sourceCaptionEl.textContent = '資料庫載入中…';
@@ -2074,13 +2113,11 @@
       var data = await res.json();
       ARTICLES = data.articles;
       generateBtn.disabled = false;
-      var cfg = sourceConfig();
       computeYearRange();
       populateYears();
-      var rangeText = dataYearRange.label ? dataYearRange.label + '・' : '';
-      sourceCaptionEl.textContent = '目前資料庫：' + cfg.shortLabel + '（' + ARTICLES.length + ' 篇真實文章・' + rangeText + '零 API 呼叫）';
-      setStatus('資料庫共 ' + ARTICLES.length + ' 篇有摘要文章' +
-        (dataYearRange.label ? '（' + dataYearRange.label + '）' : '') + '，可開始搜尋。');
+      dataLoaded = true;
+      setSourceCaption(currentSource);
+      setStatus('資料庫已載入，可開始搜尋。');
       computeGlobalFocus();
       renderHotKeywords();
       renderRecentKeywords();
@@ -2091,26 +2128,38 @@
     }
   }
 
+  var SOURCE_NOTES = {
+    gvm: '文章資料未來將透過公司內部 <abbr title="Model Context Protocol：讓 AI 助理以標準方式連接資料來源的介面">MCP</abbr> 服務以 JSON 直接取得並自動更新，不再以爬蟲抓取網頁。',
+    esg: 'ESG 文章資料未來將透過公司內部 <abbr title="Model Context Protocol：讓 AI 助理以標準方式連接資料來源的介面">MCP</abbr> 服務以 JSON 直接取得並自動更新，不再以爬蟲抓取網頁。',
+    mail: '文章資料同樣將透過公司內部 <abbr title="Model Context Protocol：讓 AI 助理以標準方式連接資料來源的介面">MCP</abbr> 服務取得並自動更新；信件在你的瀏覽器中組成，內容不會上傳。'
+  };
+  function setSourceCaption(tab) {
+    sourceCaptionEl.textContent = tab === 'mail'
+      ? '會員溝通信件生成・Podcast 與文章各自挑選，右側即時預覽最終信件'
+      : '目前資料庫：' + DATA_SOURCES[tab].shortLabel + '・零 API 呼叫';
+    mcpNoteEl.innerHTML = SOURCE_NOTES[tab];   // 僅限上方常數字串
+  }
+
   function switchSource(source) {
     // 從信件模式切回策展：即使點的是同一個資料庫，也要把畫面切回來
     if (currentMode === 'mail') {
       leaveMailMode();
       updateSourceButtons();
-      if (source === currentSource) { renderPreview(); return; }
+      if (source === currentSource && dataLoaded) { renderPreview(); return; }
     }
-    if (source === currentSource) return;
+    if (source === currentSource && dataLoaded) return;
     // 已經選好文章、編好引言時，換資料庫等於整份重來——先確認過再清空，避免手滑點掉一整份工作
     if (state.articles.length) {
       var ok = window.confirm('切換到「' + DATA_SOURCES[source].shortLabel + '」會清空目前這份策展（' +
         state.articles.length + ' 篇文章與編者的話）。\n\n確定要切換嗎？');
       if (!ok) return;
     }
-    clearDraft();
+    if (dataLoaded) clearDraft();
     loadSource(source, true);
   }
 
-  sourceGvmBtn.addEventListener('click', function () { switchSource('gvm'); });
-  sourceEsgBtn.addEventListener('click', function () { switchSource('esg'); });
+  sourceGvmBtn.addEventListener('click', function () { requireUnlock('gvm', function () { switchSource('gvm'); }); });
+  sourceEsgBtn.addEventListener('click', function () { requireUnlock('esg', function () { switchSource('esg'); }); });
 
   // ---- 草稿自動保存 ----------------------------------------------------------
   // 每週策展做到一半被打斷是常態，關掉分頁不該讓整份工作消失。狀態存在瀏覽器本機
@@ -2359,7 +2408,7 @@
     mailCatTree = art.category_tree || {};
     mailLoaded = true;
     populateMailCategories();
-    setStatus('Podcast ' + mailPodcasts.length + ' 集、文章 ' + mailArticles.length + ' 篇，可開始挑選。');
+    setStatus('資料庫已載入，可開始挑選。');
   }
 
   function ensureMailSummaries(years) {
@@ -3056,7 +3105,7 @@
     previewBody.style.display = 'none';
     mailPreviewWrap.style.display = 'block';
     updateSourceButtons();
-    sourceCaptionEl.textContent = '會員溝通信件生成・Podcast 與文章各自挑選，右側即時預覽最終信件';
+    setSourceCaption('mail');
     await ensureMailData();
     renderMailPicked();
     renderMailPreview();
@@ -3118,17 +3167,144 @@
   mailWidthSel.addEventListener('change', renderMailPreview);
   mailCopyBtn.addEventListener('click', copyMailRichText);
   mailEmlBtn.addEventListener('click', downloadMailEml);
-  sourceMailBtn.addEventListener('click', enterMailMode);
+  sourceMailBtn.addEventListener('click', function () { requireUnlock('mail', enterMailMode); });
+
+  // ---- 分頁密碼閘門 ----------------------------------------------------------
+  // 這道門只擋「誤闖」，不是資料保護：資料檔網址是公開的，密碼也在瀏覽器端驗證
+  // （公司文件《AI做網頁_發布提醒》p.7：密碼只擋誤闖，不能因此放真實資料）。
+  // 每個分頁各有一組 {salt, hash}（PBKDF2-HMAC-SHA256），設定檔 gate-config.js 只含
+  // 鹽與雜湊、不含密碼。沒有設定檔／該分頁沒設定／瀏覽器不支援 → 一律鎖住（fail closed）。
+  var GATE_LABELS = { gvm: '線上讀', esg: '共好圈', mail: '會員溝通信件' };
+  var gateEl = $('gvm-gate');
+  var gateFormEl = $('gvm-gate-form');
+  var gateInputEl = $('gvm-gate-input');
+  var gateBtnEl = $('gvm-gate-btn');
+  var gateMsgEl = $('gvm-gate-msg');
+  var gateSubEl = $('gvm-gate-sub');
+  var gateTab = null;
+  var gateProceed = null;
+  var gateFails = 0;
+  var gateLockUntil = 0;
+  var gateTimer = null;
+
+  function gateConfigFor(tab) {
+    var cfg = window.BSA_GATE;
+    if (!cfg || !cfg.tabs || !cfg.tabs[tab] || !cfg.tabs[tab].salt || !cfg.tabs[tab].hash) return null;
+    return { iterations: cfg.iterations || 600000, salt: cfg.tabs[tab].salt, hash: cfg.tabs[tab].hash };
+  }
+  function gateIsUnlocked(tab) {
+    try { return sessionStorage.getItem('gvm_gate_v1:' + tab) === '1'; } catch (e) { return false; }
+  }
+  function gateMarkUnlocked(tab) {
+    try { sessionStorage.setItem('gvm_gate_v1:' + tab, '1'); } catch (e) { /* 無法記住就每次都問 */ }
+  }
+  function b64ToBytes(b64) {
+    var bin = atob(b64), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  async function gateVerify(tab, password) {
+    var c = gateConfigFor(tab);
+    var pw = new TextEncoder().encode(password.normalize('NFC'));
+    var key = await crypto.subtle.importKey('raw', pw, 'PBKDF2', false, ['deriveBits']);
+    var bits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', hash: 'SHA-256', salt: b64ToBytes(c.salt), iterations: c.iterations }, key, 256);
+    var got = new Uint8Array(bits), want = b64ToBytes(c.hash);
+    if (got.length !== want.length) return false;
+    var diff = 0;
+    for (var i = 0; i < got.length; i++) diff |= got[i] ^ want[i];   // 常數時間比較
+    return diff === 0;
+  }
+
+  function gateSetMsg(text, info) {
+    gateMsgEl.textContent = text;
+    gateMsgEl.classList.toggle('info', !!info);
+  }
+  function gateTick() {
+    var left = Math.ceil((gateLockUntil - Date.now()) / 1000);
+    if (left > 0) {
+      gateBtnEl.disabled = true;
+      gateSetMsg('嘗試次數過多，請 ' + left + ' 秒後再試。', true);
+      return;
+    }
+    clearInterval(gateTimer); gateTimer = null;
+    gateBtnEl.disabled = false;
+    gateSetMsg('');
+  }
+
+  function showGate(tab, proceed) {
+    gateTab = tab;
+    gateProceed = proceed;
+    document.body.classList.add('gvm-gated');
+    document.body.classList.toggle('source-esg', tab !== 'gvm');
+    [[sourceGvmBtn, 'gvm'], [sourceEsgBtn, 'esg'], [sourceMailBtn, 'mail']].forEach(function (p) {
+      p[0].classList.toggle('active', p[1] === tab);
+    });
+    gateSubEl.textContent = '請輸入「' + GATE_LABELS[tab] + '」分頁的密碼';
+    gateInputEl.value = '';
+    var supported = !!(window.crypto && crypto.subtle && window.TextEncoder);
+    var configured = !!gateConfigFor(tab);
+    gateFormEl.style.display = (supported && configured) ? '' : 'none';
+    if (!supported) gateSetMsg('此瀏覽器或連線方式不支援安全驗證，暫時無法使用。', true);
+    else if (!configured) gateSetMsg('尚未設定分頁密碼，暫時無法使用。', true);
+    else { gateSetMsg(''); if (gateLockUntil > Date.now() && !gateTimer) gateTimer = setInterval(gateTick, 500); gateTick(); gateInputEl.focus(); }
+  }
+  function hideGate() {
+    gateTab = null;
+    gateProceed = null;
+    document.body.classList.remove('gvm-gated');
+    // 閘門只是暫時蓋住畫面，state 沒動；這裡依實際狀態還原主題與分頁鈕
+    document.body.classList.toggle('source-esg', currentMode === 'mail' || currentSource === 'esg');
+    updateSourceButtons();
+  }
+  function requireUnlock(tab, proceed) {
+    if (gateIsUnlocked(tab)) { hideGate(); proceed(); return; }
+    showGate(tab, proceed);
+  }
+
+  gateFormEl.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    if (!gateTab || gateBtnEl.disabled || !gateInputEl.value) return;
+    var tab = gateTab, proceed = gateProceed;
+    gateBtnEl.disabled = true;
+    gateSetMsg('驗證中…', true);
+    var ok = false;
+    try { ok = await gateVerify(tab, gateInputEl.value); }
+    catch (err) { console.error(err); gateSetMsg('驗證失敗，請重新整理後再試。', true); gateBtnEl.disabled = false; return; }
+    if (gateTab !== tab) return;   // 驗證期間使用者已切到別的分頁
+    if (ok) {
+      gateFails = 0;
+      gateMarkUnlocked(tab);
+      hideGate();
+      proceed();
+      return;
+    }
+    gateFails++;
+    gateInputEl.value = '';
+    if (gateFails >= 3) {
+      // 第 3 次錯起等 2 秒，之後每多錯一次加倍，上限 60 秒——只是讓亂試變慢
+      gateLockUntil = Date.now() + Math.min(60, Math.pow(2, gateFails - 2)) * 1000;
+      gateTimer = gateTimer || setInterval(gateTick, 500);
+      gateTick();
+    } else {
+      gateBtnEl.disabled = false;
+      gateSetMsg('密碼不正確，請再試一次。');
+    }
+    gateInputEl.focus();
+  });
 
   async function init() {
     var draft = readDraft();
-    await loadSource(draft ? draft.source : 'gvm', false);
-    if (draft) {
-      draftTextEl.innerHTML = '找到 <b>' + formatDraftTime(draft.savedAt) + '</b> 未完成的策展草稿：' +
-        '<b>' + escapeHtml(DATA_SOURCES[draft.source].label) + '</b>・關鍵字「' +
-        escapeHtml(draft.keyword) + '」・' + draft.articles.length + ' 篇。';
-      draftBannerEl.classList.add('show');
-    }
+    var startTab = draft ? draft.source : 'gvm';
+    requireUnlock(startTab, async function () {
+      await loadSource(startTab, false);
+      if (draft) {
+        draftTextEl.innerHTML = '找到 <b>' + formatDraftTime(draft.savedAt) + '</b> 未完成的策展草稿：' +
+          '<b>' + escapeHtml(DATA_SOURCES[draft.source].label) + '</b>・關鍵字「' +
+          escapeHtml(draft.keyword) + '」・' + draft.articles.length + ' 篇。';
+        draftBannerEl.classList.add('show');
+      }
+    });
   }
 
   init();
