@@ -6,7 +6,7 @@
 
 ```
 index.html              入口頁
-data/gvm_index_full.json 共用資料庫（遠見雜誌 29,583 篇文章索引）
+data/gvm_index_full.json 共用資料庫（遠見雜誌文章索引）
 smart-curation/          智能策展部（遠見線上讀）
 ceo-secretary/           CEO秘書部（規劃中）
 ```

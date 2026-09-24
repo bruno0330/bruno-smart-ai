@@ -810,7 +810,7 @@
     ['綠能','再生能源','太陽能','風電']
   ];
 
-  // ESG 共好圈專用。每一組的詞都先對 4,289 篇真實文章實測過出現次數，
+  // ESG 共好圈專用。每一組的詞都先對全部真實文章實測過出現次數，
   // 幾乎查不到的詞（例如「洗綠」只有 1 篇、「綠色債券」3 篇）就不放進來，
   // 避免產生點了搜不到東西的熱門關鍵字。
   var SYNONYM_GROUPS_ESG = [
@@ -965,7 +965,7 @@
   }
 
   // 全文摘要按年份拆檔存放（smart-curation/data/summaries/{year}.json），
-  // 精簡索引檔只帶短摘要片段（es）供搜尋比對，避免每次都要下載全部 29,583 篇的全文。
+  // 精簡索引檔只帶短摘要片段（es）供搜尋比對，避免每次都要下載全部文章的全文。
   // 只在文章真的被選中要顯示時，才動態抓對應年份的全文檔。
   var summariesCache = {};
 
@@ -1054,7 +1054,7 @@
     scored.forEach(function (item) {
       if (picked.length >= count) return;
       // 一期一篇：本誌是月刊，同一期挑兩篇會讓整份策展看起來偏食。但 ESG 共好圈是網路媒體、
-      // 沒有期數（n 欄位實測 4,289 篇全為空字串），原本 `n || y` 會讓條件掉成「同一個月最多一篇」——
+      // 沒有期數（n 欄位實測全為空字串），原本 `n || y` 會讓條件掉成「同一個月最多一篇」——
       // 對幾乎每天發文的資料庫來說是無謂的限制，會硬擠掉分數更高的文章。沒有期數就不套用這條。
       var issueKey = item.article.n;
       if (issueKey) {
@@ -2440,11 +2440,11 @@
     var parents = Object.keys(counts).sort(function (x, y) { return counts[y] - counts[x]; });
     maCat.innerHTML = '';
     var all = document.createElement('option');
-    all.value = ''; all.textContent = '不限分類（' + mailArticles.length + '）';
+    all.value = ''; all.textContent = '不限分類';
     maCat.appendChild(all);
     parents.forEach(function (p) {
       var o = document.createElement('option');
-      o.value = p; o.textContent = p + '（' + counts[p] + '）';
+      o.value = p; o.textContent = p;   // 依篇數由多到少排序，但不顯示數字
       maCat.appendChild(o);
     });
     maCat.value = counts[MAIL_DEFAULT_PARENT] ? MAIL_DEFAULT_PARENT : '';
@@ -2465,7 +2465,7 @@
     maSub.appendChild(all);
     subs.forEach(function (sname) {
       var o = document.createElement('option');
-      o.value = sname; o.textContent = sname + '（' + counts[sname] + '）';
+      o.value = sname; o.textContent = sname;
       maSub.appendChild(o);
     });
     // 只有一個子分類、而且就等於父分類本身時（例如專家觀點）沒有細分的意義
