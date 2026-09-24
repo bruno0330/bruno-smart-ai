@@ -7,3 +7,7 @@ scripts/.backfill_errors.json
 scripts/.image_backfill_progress.json
 scripts/.monthly_scrape_summary.txt
 .DS_Store
+
+# Claude Code 的私人說明書：內含內部路徑與設定，本專案是公開 repo，不可上傳。
+CLAUDE.md
+CLAUDE.local.md
