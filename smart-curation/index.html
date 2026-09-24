@@ -64,7 +64,12 @@
   #gvm-root{
     max-width:1240px; margin:0 auto; padding:20px 24px 60px;
   }
-  .gvm-masthead{ text-align:center; margin-bottom:28px; }
+  .gvm-masthead{ text-align:center; margin-bottom:28px; position:relative; }
+  .gvm-logout{ position:absolute; top:0; right:0; padding:var(--sp-1) var(--sp-3); border:1px solid var(--field-border);
+    border-radius:999px; background:#fff; color:var(--text-soft); font-size:var(--fs-1); font-family:inherit; cursor:pointer; }
+  .gvm-logout:hover{ color:var(--accent-deep); border-color:var(--accent); }
+  body.gvm-gated .gvm-logout{ display:none; }
+  @media (max-width:640px){ .gvm-logout{ position:static; display:block; margin:0 0 var(--sp-2) auto; } }
   .gvm-masthead-eyebrow{
     font-size:var(--fs-1); letter-spacing:.3em; color:var(--rose); text-transform:uppercase;
     font-weight:700; margin-bottom:8px;
@@ -282,7 +287,7 @@
      解鎖前整個工作區（#gvm-layout）與草稿橫幅都隱藏。 */
   body.gvm-gated #gvm-layout, body.gvm-gated .gvm-draft-banner,
   body.gvm-gated .gvm-source-caption, body.gvm-gated .gvm-mcp-note{ display:none !important; }
-  .gvm-masthead-sub b{ font-weight:700; color:var(--accent-deep); }
+  .gvm-masthead-sub b{ font-weight:700; color:#c62828; }
   .gvm-mcp-note{ font-size:var(--fs-1); color:var(--text-soft); margin-top:var(--sp-1); line-height:1.6; }
   .gvm-mcp-note abbr{ text-decoration:underline dotted; cursor:help; }
   .gvm-gate{ display:none; max-width:420px; margin:var(--sp-6) auto var(--sp-7); padding:var(--sp-5);
@@ -301,6 +306,7 @@
   .gvm-gate-form button:disabled{ opacity:.5; cursor:not-allowed; }
   .gvm-gate-msg{ min-height:1.4em; margin-top:var(--sp-3); font-size:var(--fs-2); color:#b42318; }
   .gvm-gate-msg.info{ color:var(--text-soft); }
+  .gvm-gate-hint{ margin-top:var(--sp-4); font-size:var(--fs-1); color:var(--text-soft); }
   #gvm-mail-scale{ overflow:hidden; }
   /* grid item 預設 min-width:auto，不會縮到比內容小——固定 600px 的信件會直接
      把整欄撐開，量到的「可用寬度」就永遠是 600，縮放算出來自然是 1。 */
@@ -383,6 +389,7 @@
 
 <div id="gvm-root">
   <div class="gvm-masthead">
+    <button type="button" class="gvm-logout" id="gvm-logout" title="登出並回到密碼畫面">登出</button>
     <div class="gvm-masthead-eyebrow">GVM INTELLIGENT CURATION</div>
     <div class="gvm-masthead-title">智能策展部</div>
     <div class="gvm-masthead-sub">選擇要策展的資料庫，開始搜尋真實文章、生成推播內容。<b>本功能僅供內部同仁使用。</b></div>
@@ -416,6 +423,7 @@
       <button type="submit" id="gvm-gate-btn">解鎖</button>
     </form>
     <div class="gvm-gate-msg" id="gvm-gate-msg" role="alert"></div>
+    <div class="gvm-gate-hint">若不知道密碼，請聯繫 #847 Bruno。</div>
   </div>
 
   <div class="gvm-layout" id="gvm-layout">
@@ -2129,8 +2137,8 @@
   }
 
   var SOURCE_NOTES = {
-    gvm: '文章資料未來將透過公司內部 <abbr title="Model Context Protocol：讓 AI 助理以標準方式連接資料來源的介面">MCP</abbr> 服務以 JSON 直接取得並自動更新，不再以爬蟲抓取網頁。',
-    esg: 'ESG 文章資料未來將透過公司內部 <abbr title="Model Context Protocol：讓 AI 助理以標準方式連接資料來源的介面">MCP</abbr> 服務以 JSON 直接取得並自動更新，不再以爬蟲抓取網頁。',
+    gvm: '文章資料將透過公司內部 <abbr title="Model Context Protocol：讓 AI 助理以標準方式連接資料來源的介面">MCP</abbr> 服務以 JSON 直接取得並自動更新，不透過爬蟲抓取網頁。',
+    esg: 'ESG 文章資料將透過公司內部 <abbr title="Model Context Protocol：讓 AI 助理以標準方式連接資料來源的介面">MCP</abbr> 服務以 JSON 直接取得並自動更新，不透過爬蟲抓取網頁。',
     mail: '文章資料同樣將透過公司內部 <abbr title="Model Context Protocol：讓 AI 助理以標準方式連接資料來源的介面">MCP</abbr> 服務取得並自動更新；信件在你的瀏覽器中組成，內容不會上傳。'
   };
   function setSourceCaption(tab) {
@@ -3291,6 +3299,17 @@
       gateSetMsg('密碼不正確，請再試一次。');
     }
     gateInputEl.focus();
+  });
+
+  // 登出：清掉所有分頁的解鎖狀態並重新載入，記憶體裡的資料庫內容也一併丟掉。
+  // 策展草稿存在 localStorage 會保留；信件分頁目前沒有草稿保存，所以有挑選內容時先確認。
+  $('gvm-logout').addEventListener('click', function () {
+    if ((mailState.podcasts.length || mailState.articles.length) &&
+        !window.confirm('登出後信件分頁已挑選的內容不會保留（策展草稿則會保留）。\n\n確定要登出嗎？')) {
+      return;
+    }
+    try { Object.keys(GATE_LABELS).forEach(function (t) { sessionStorage.removeItem('gvm_gate_v1:' + t); }); } catch (e) { /* 沒辦法清就算了，關分頁一樣會失效 */ }
+    location.reload();
   });
 
   async function init() {
