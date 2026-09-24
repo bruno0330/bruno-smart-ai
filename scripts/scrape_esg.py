@@ -121,8 +121,11 @@ def convert_post(post, cats):
     return {
         'i': str(post['id']),
         't': title,
+        # content（文章全文，平均 2,054 字）刻意不保存。它從來沒有被任何程式讀取過
+        # ——build_esg_curation_index.py 用的是 'e'——卻是這個公開 repo 裡最敏感的內容：
+        # 4,289 篇合計約 877 萬字的遠見版權文章，未登入就能整包下載。
+        # 真的需要全文時再改回來，但要同時確認 repo 不是公開狀態。
         'e': excerpt or content[:200],
-        'full': content,
         'y': y,
         'n': '',
         'm': '',
