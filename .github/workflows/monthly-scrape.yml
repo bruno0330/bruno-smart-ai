@@ -1,10 +1,9 @@
+# 已於 2026-09-24 停用排程（資安決議：付費內容不得自動爬取、不得進公開 repo）。
+# 資料已更新到 2026 年 9 月底，為最後一輪。
+# 之後改用 MCP 取得資料；MCP 上線前請勿手動觸發。
 name: Monthly GVM scrape
 
 on:
-  schedule:
-    # 5th of each month, 01:00 UTC = 09:00 Taipei -- gives buffer after
-    # month-start for gvm.com.tw to actually populate the new issue
-    - cron: '0 1 5 * *'
   workflow_dispatch: {}
 
 permissions:
