@@ -4,7 +4,7 @@
 Images aren't per-article in the original scrape. Fetching them one issue
 page at a time (JSON-LD ItemList lists every article + image for that
 issue in one request) is far cheaper than one request per article --
-~611 issue requests instead of ~29,583 article requests.
+one request per issue instead of one request per article.
 
 Writes to a SEPARATE file (data/gvm_image_index.json), not
 gvm_index_full.json, so this can run safely at the same time as

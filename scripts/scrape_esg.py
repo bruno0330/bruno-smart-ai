@@ -5,7 +5,7 @@ Unlike the main 遠見雜誌 site, esg.gvm.com.tw is WordPress and exposes its o
 public REST API (no auth, allowed by robots.txt) -- one page of the API
 already returns real title/date/category/excerpt/content/author/image for up
 to 100 posts, so this doesn't need the per-issue-then-per-article crawl the
-main-site scripts use. ~4,289 posts total as of 2026-08-27.
+main-site scripts use.
 
 Schema mirrors data/gvm_index_full.json (i/t/e/y/n/m/s/a/source_url) so the
 existing smart-curation search/scoring logic (SYNONYM_GROUPS, scoreArticle,
@@ -123,7 +123,7 @@ def convert_post(post, cats):
         't': title,
         # content（文章全文，平均 2,054 字）刻意不保存。它從來沒有被任何程式讀取過
         # ——build_esg_curation_index.py 用的是 'e'——卻是這個公開 repo 裡最敏感的內容：
-        # 4,289 篇合計約 877 萬字的遠見版權文章，未登入就能整包下載。
+        # 整批遠見版權文章的全文，未登入就能整包下載。
         # 真的需要全文時再改回來，但要同時確認 repo 不是公開狀態。
         'e': excerpt or content[:200],
         'y': y,

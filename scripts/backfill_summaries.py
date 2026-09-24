@@ -2,7 +2,7 @@
 """One-time backfill for data/gvm_index_full.json.
 
 The original scraper only captured a real summary (the 'e' field) for
-~3.8% of articles (1,120 / 29,583). Spot-checks across 1987-2026 confirmed
+a small fraction of articles. Spot-checks across 1987-2026 confirmed
 gvm.com.tw actually serves a real <meta name="description"> on essentially
 every article page -- the gap was a scraper bug, not missing content. This
 script re-fetches just that one field for every article currently missing
